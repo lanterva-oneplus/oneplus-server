@@ -47,4 +47,8 @@ export class Cookie {
     }
     return undefined
   }
+
+  static revokeCookie(res, name) {
+    res.setHeader('Set-Cookie', `${name}=; Max-Age=0`)
+  }
 }
