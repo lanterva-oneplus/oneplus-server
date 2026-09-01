@@ -1,19 +1,13 @@
-import server2 from "./s2.test.js";
-import { Server } from "./server/server.js";
+import { Router } from './server/router.js'
+import { Server } from './server/server.js'
 
 const server = new Server()
+const router1 = new Router()
 
-server.use('*', (req, res, next) => {
-  console.log(req.url, ': 요청')
-  next()
+router1.get('/', (req, res) => {
+  res.json({ msg: '반갑습니다.' })
 })
 
-server.get('/x', (req, res) => {
-  res.text('반갑다')
-})
-
-server.router('/t', server2)
-
-server.routes.forEach(route => console.log(route.path.pathname))
+server.router('/ra', router1)
 
 server.listen(3000)
