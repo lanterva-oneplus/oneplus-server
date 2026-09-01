@@ -3,8 +3,8 @@ import http from 'node:http'
 export class Server {
   /**
    * @type {{
-   * method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
-   * path: string,
+   * method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE' | null,
+   * path: URLPattern,
    * handler: (req: http.IncomingMessage, res: http.ServerResponse) => any
    * }[]}
    */
@@ -13,7 +13,7 @@ export class Server {
   use(path, callback) {
     this.routes.push({
       method: null,
-      path: path,
+      path: new URLPattern({ pathname: path }),
       handler: callback,
     })
     return this
@@ -26,7 +26,7 @@ export class Server {
   get(path, callback) {
     this.routes.push({
       method: 'GET',
-      path: path,
+      path: new URLPattern({ pathname: path }),
       handler: callback,
     })
     return this
@@ -72,19 +72,6 @@ export class Server {
    * @param { http.IncomingMessage } req
    * @param { http.ServerResponse } res
    */
-  #handle(req, res) {
-    // url 체크 후 핸들러 받기
-    const handle = this.routes.find((route) => new URLPattern({ path: route.path }).test({ path: path }))
-
-    if (!handle) console.log('에러다') // 에러 던지도록 수정
-
-    // 미들웨어 받기
-  }
-
-  /**
-   * @param { http.IncomingMessage } req
-   * @param { http.ServerResponse } res
-   */
   #setContext(req, res) {
     res['json'] = (data) => {
       res.setHeader('Content-Type', 'application/json')
@@ -99,6 +86,50 @@ export class Server {
       res.statusCode = 200
       res.end(String(data))
     }
+  }
+
+  /**
+   * @param { http.IncomingMessage } req
+   * @param { http.ServerResponse } res
+   */
+  #handle(req, res) {
+    const url = new URL(`http://localhost:3000${req.url}`)
+    let idx = 0
+
+    const next = (err) => {
+      if (err) {
+        res.statusCode = 500
+        res.json({ message: err })
+        return
+      }
+
+      const route = this.routes[idx++]
+      if (!route) {
+        res.statusCode = 404
+        res.json({ message: 'not found' })
+        return
+      }
+
+      if (route.method === null) {
+        const handler = route.path.exec(url)
+        if (handler) {
+          req.params = handler.pathname.groups
+          return route.handler(req, res, next)
+        }
+      }
+
+      if (route.method === req.method) {
+        const handler = route.path.exec(url)
+        if (handler) {
+          req.params = handler.pathname.groups
+          return route.handler(req, res)
+        }
+      }
+
+      next()
+    }
+
+    next()
   }
 
   listen(port) {
