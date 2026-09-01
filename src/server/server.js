@@ -10,6 +10,10 @@ export class Server {
    */
   routes = []
 
+  /**
+   * @param { string } path
+   * @param { (req: http.IncomingMessage, res: http.ServerResponse) => any } callback
+   */
   use(path, callback) {
     this.routes.push({
       method: null,
@@ -32,37 +36,53 @@ export class Server {
     return this
   }
 
+  /**
+   * @param { string } path
+   * @param { (req: http.IncomingMessage, res: http.ServerResponse) => any } callback
+   */
   post(path, callback) {
     this.routes.push({
       method: 'POST',
-      path: path,
+      path: new URLPattern({ pathname: path }),
       handler: callback,
     })
     return this
   }
 
+  /**
+   * @param { string } path
+   * @param { (req: http.IncomingMessage, res: http.ServerResponse) => any } callback
+   */
   patch(path, callback) {
     this.routes.push({
       method: 'PATCH',
-      path: path,
+      path: new URLPattern({ pathname: path }),
       handler: callback,
     })
     return this
   }
 
+  /**
+   * @param { string } path
+   * @param { (req: http.IncomingMessage, res: http.ServerResponse) => any } callback
+   */
   put(path, callback) {
     this.routes.push({
       method: 'PUT',
-      path: path,
+      path: new URLPattern({ pathname: path }),
       handler: callback,
     })
     return this
   }
 
+  /**
+   * @param { string } path
+   * @param { (req: http.IncomingMessage, res: http.ServerResponse) => any } callback
+   */
   delete(path, callback) {
     this.routes.push({
       method: 'DELETE',
-      path: path,
+      path: new URLPattern({ pathname: path }),
       handler: callback,
     })
     return this
