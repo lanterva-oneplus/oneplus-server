@@ -50,6 +50,7 @@ export class Server {
     res['json'] = (data) => {
       res.setHeader('Content-Type', 'application/json')
       res.end(JSON.stringify(data))
+      return
     }
 
     /** @param {string} data */
@@ -59,6 +60,7 @@ export class Server {
       res.setHeader('Content-Length', Buffer.byteLength(data, 'utf-8'))
       res.statusCode = 200
       res.end(String(data))
+      return
     }
   }
 
