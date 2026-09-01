@@ -89,6 +89,23 @@ export class Server {
   }
 
   /**
+   * @param { string } path
+   * @param { Server } server
+   */
+  router(path = '', server) {
+    if (path === '') {
+      this.routes.push(...server.routes)
+      return
+    }
+
+    for (const route of server.routes) {
+      const newPathName = new URLPattern({ pathname: `${path}${route.path.pathname}` })
+      route.path = newPathName
+      this.routes.push(route)
+    }
+  }
+
+  /**
    * @param { http.IncomingMessage } req
    * @param { http.ServerResponse } res
    */
@@ -152,7 +169,11 @@ export class Server {
     next()
   }
 
-  listen(port) {
+  /**
+   *
+   * @param { number } port
+   */
+  listen(port = 3000) {
     http
       .createServer((req, res) => {
         this.#setContext(req, res)
