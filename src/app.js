@@ -2,11 +2,13 @@ import { Server } from "./server/server.js";
 
 const server = new Server()
 
-server.get('/', (req, res) => {
-  res.setHeader('Content-Type', 'text/Plain')
-  res.statusCode = 200
-  res.write('welcome')
-  res.end()
+server.use('*', (req, res, next) => {
+  console.log(req.url, ': 요청')
+  next()
+})
+
+server.get('/x', (req, res) => {
+  res.text('반갑다')
 })
 
 server.listen(3000)
