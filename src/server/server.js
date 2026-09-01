@@ -1,4 +1,5 @@
 import http from 'node:http'
+import { Router } from './router.js'
 
 export class Server {
   /**
@@ -24,81 +25,17 @@ export class Server {
   }
 
   /**
+   * 라우팅 처리
    * @param { string } path
-   * @param { (req: http.IncomingMessage, res: http.ServerResponse) => any } callback
+   * @param { Router } router
    */
-  get(path, callback) {
-    this.routes.push({
-      method: 'GET',
-      path: new URLPattern({ pathname: path }),
-      handler: callback,
-    })
-    return this
-  }
-
-  /**
-   * @param { string } path
-   * @param { (req: http.IncomingMessage, res: http.ServerResponse) => any } callback
-   */
-  post(path, callback) {
-    this.routes.push({
-      method: 'POST',
-      path: new URLPattern({ pathname: path }),
-      handler: callback,
-    })
-    return this
-  }
-
-  /**
-   * @param { string } path
-   * @param { (req: http.IncomingMessage, res: http.ServerResponse) => any } callback
-   */
-  patch(path, callback) {
-    this.routes.push({
-      method: 'PATCH',
-      path: new URLPattern({ pathname: path }),
-      handler: callback,
-    })
-    return this
-  }
-
-  /**
-   * @param { string } path
-   * @param { (req: http.IncomingMessage, res: http.ServerResponse) => any } callback
-   */
-  put(path, callback) {
-    this.routes.push({
-      method: 'PUT',
-      path: new URLPattern({ pathname: path }),
-      handler: callback,
-    })
-    return this
-  }
-
-  /**
-   * @param { string } path
-   * @param { (req: http.IncomingMessage, res: http.ServerResponse) => any } callback
-   */
-  delete(path, callback) {
-    this.routes.push({
-      method: 'DELETE',
-      path: new URLPattern({ pathname: path }),
-      handler: callback,
-    })
-    return this
-  }
-
-  /**
-   * @param { string } path
-   * @param { Server } server
-   */
-  router(path = '', server) {
+  router(path = '', router) {
     if (path === '') {
-      this.routes.push(...server.routes)
+      this.routes.push(...router.routes)
       return
     }
 
-    for (const route of server.routes) {
+    for (const route of router.routes) {
       const newPathName = new URLPattern({ pathname: `${path}${route.path.pathname}` })
       route.path = newPathName
       this.routes.push(route)
