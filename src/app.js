@@ -14,10 +14,8 @@ router1.get('/', (req, res) => {
 })
 
 router1.get('/c', (req, res) => {
-  const cookie = Cookie.getCookie(req, 'name')
-  console.log(cookie.name)
-  console.log(cookie.value)
-  res.json(Cookie.getCookie(req, 'name'))
+  Cookie.revokeCookie(res, 'name')
+  res.text('쿠키 삭제됨')
 })
 
 server.router('/ra', router1)
