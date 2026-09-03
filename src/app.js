@@ -1,6 +1,6 @@
-import { Cookie } from './server/cookie.js'
-import { Router } from './server/router.js'
-import { Server } from './server/server.js'
+import { Cookie } from './common/server/cookie.js'
+import { Router } from './common/server/router.js'
+import { Server } from './common/server/server.js'
 
 const server = new Server()
 const router1 = new Router()
