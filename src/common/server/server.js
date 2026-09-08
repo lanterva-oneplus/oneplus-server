@@ -47,17 +47,18 @@ export class Server {
    * @param { http.ServerResponse } res
    */
   #setContext(req, res) {
-    res['json'] = (data) => {
+    res['json'] = (status = '200', data) => {
       res.setHeader('Content-Type', 'application/json')
+      res.statusCode = status
       res.end(JSON.stringify(data))
     }
 
     /** @param {string} data */
-    res['text'] = (data) => {
+    res['text'] = (status = 200, data) => {
       if (typeof data !== 'string') throw new Error('string 타입만 허용합니다.')
       res.setHeader('Content-Type', 'text/plain; charset=utf-8')
       res.setHeader('Content-Length', Buffer.byteLength(data, 'utf-8'))
-      res.statusCode = 200
+      res.statusCode = status
       res.end(String(data))
     }
 
@@ -76,37 +77,49 @@ export class Server {
     const url = new URL(`http://localhost:3000${req.url}`)
     let idx = 0
 
-    const next = (err) => {
+    const next = async (err) => {
       if (err) {
-        res.statusCode = 500
-        res.json({ message: err })
+        res.statusCode = err.status || 500
+        res.json({ error: err.errorCode, message: err.message })
         return
       }
 
-      const route = this.routes[idx++]
-      if (!route) {
-        res.statusCode = 404
-        res.json({ message: 'not found' })
-        return
-      }
-
-      if (route.method === null) {
-        const handler = route.path.exec(url)
-        if (handler) {
-          req.params = handler.pathname.groups
-          return route.handler(req, res, next)
+      try {
+        const route = this.routes[idx++]
+        if (!route) {
+          res.statusCode = 404
+          res.json({ message: 'not found' })
+          return
         }
-      }
 
-      if (route.method === req.method) {
-        const handler = route.path.exec(url)
-        if (handler) {
-          req.params = handler.pathname.groups
-          return route.handler(req, res)
+        if (route.method === null) {
+          const handler = route.path.exec(url)
+          if (handler) {
+            req.params = handler.pathname.groups
+            const result = route.handler(req, res, next)
+            if (result instanceof Promise) {
+              await result
+            }
+            return
+          }
         }
-      }
 
-      next()
+        if (route.method === req.method) {
+          const handler = route.path.exec(url)
+          if (handler) {
+            req.params = handler.pathname.groups
+            const result = route.handler(req, res)
+            if (result instanceof Promise) {
+              await result
+            }
+            return
+          }
+        }
+
+        next()
+      } catch (err) {
+        next(err)
+      }
     }
 
     next()
