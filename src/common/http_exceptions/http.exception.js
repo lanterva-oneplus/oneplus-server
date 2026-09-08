@@ -6,7 +6,7 @@
  *   error: '에러' <- 에러 값
  * }
  */
-export class HttpException extends Error {
+export default class HttpException extends Error {
   constructor(statusCode, message, error) {
     super(message)
     this.statusCode = statusCode
