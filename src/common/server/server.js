@@ -121,6 +121,8 @@ export class Server {
         next(err)
       }
     }
+
+    next()
   }
 
   /**
