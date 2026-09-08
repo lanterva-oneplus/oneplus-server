@@ -40,3 +40,4 @@ temp/
 # Build/Dist (if applicable)
 dist/
 build/
+.env
