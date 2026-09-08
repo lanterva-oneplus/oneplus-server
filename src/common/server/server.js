@@ -1,5 +1,6 @@
 import http from 'node:http'
 import { Router } from './router.js'
+import HttpException from '../http_exceptions/http.exception.js'
 
 export class Server {
   /**
@@ -79,17 +80,26 @@ export class Server {
 
     const next = async (err) => {
       if (err) {
-        res.statusCode = err.status || 500
-        res.json({ error: err.errorCode, message: err.message })
-        return
+        if (err instanceof HttpException) {
+          return res.json(err.statusCode, {
+            message: err.message,
+            error: err.error,
+          })
+        }
+
+        return res.json(500, {
+          message: '알 수 없는 문제가 발생했습니다.',
+          error: '내부 서버 오류',
+        })
       }
 
       try {
         const route = this.routes[idx++]
         if (!route) {
-          res.statusCode = 404
-          res.json({ message: 'not found' })
-          return
+          return res.json(404, {
+            message: '요청한 정보를 찾을 수 없습니다.',
+            error: '리소스를 찾을 수 없음',
+          })
         }
 
         if (route.method === null) {
