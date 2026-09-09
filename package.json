@@ -13,5 +13,8 @@
   "main": "app.js",
   "keywords": [],
   "author": "",
-  "license": "none"
+  "license": "none",
+  "dependencies": {
+    "ioredis": "^6.0.0"
+  }
 }
