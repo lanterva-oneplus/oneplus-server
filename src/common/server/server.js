@@ -48,14 +48,17 @@ export class Server {
    * @param { http.ServerResponse } res
    */
   #setContext(req, res) {
-    res['json'] = (status = '200', data) => {
+    res['json'] = (data, status = 200) => {
       res.setHeader('Content-Type', 'application/json')
       res.statusCode = status
       res.end(JSON.stringify(data))
     }
 
-    /** @param {string} data */
-    res['text'] = (status = 200, data) => {
+    /**
+     * @param {string} data
+     * @param {number} status
+     */
+    res['text'] = (data, status = 200) => {
       if (typeof data !== 'string') throw new Error('string 타입만 허용합니다.')
       res.setHeader('Content-Type', 'text/plain; charset=utf-8')
       res.setHeader('Content-Length', Buffer.byteLength(data, 'utf-8'))
@@ -63,9 +66,28 @@ export class Server {
       res.end(String(data))
     }
 
-    res['redirect'] = (path) => {
+    /**
+     * @typedef {object} RedirectOption
+     * @property {301 | 302 | 307} statusCode
+     * @property {boolean} [cache]
+     * @property {number} [maxAge]
+     */
+
+    /**
+     * @param { string } path
+     * @param {RedirectOption} option
+     */
+    res['redirect'] = (path, option = {}) => {
       res.setHeader('Location', path)
-      res.statusCode = 301
+
+      if (option.cache) {
+        let control = 'public, immutable, '
+        if (option.maxAge) control += `max-age=${option.maxAge}`
+        res.setHeader('Cache-Control', control)
+      } else {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+      }
+      res.statusCode = option.statusCode || 302
       res.end()
     }
   }
@@ -84,22 +106,22 @@ export class Server {
           return res.json(err.statusCode, {
             message: err.message,
             error: err.error,
-          })
+          }, err.statusCode)
         }
 
-        return res.json(500, {
+        return res.json({
           message: '알 수 없는 문제가 발생했습니다.',
           error: '내부 서버 오류',
-        })
+        }, 500)
       }
 
       try {
         const route = this.routes[idx++]
         if (!route) {
-          return res.json(404, {
+          return res.json({
             message: '요청한 정보를 찾을 수 없습니다.',
             error: '리소스를 찾을 수 없음',
-          })
+          }, 404)
         }
 
         if (route.method === null) {
