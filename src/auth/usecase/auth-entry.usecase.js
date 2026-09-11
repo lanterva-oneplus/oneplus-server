@@ -1,3 +1,5 @@
+import redis from '../../common/modules/redis.module.js'
+import InternalServerErrorException from '../../common/http_exceptions/internal-server-error.exception.js'
 import { OAuthService } from '../oauth.service.js'
 
 /**
@@ -11,7 +13,12 @@ const authEntry = async (req, res) => {
   const { codeVerifier, codeChallenge } = oAuthService.generateCodeVerifierSet()
   const url = oAuthService.generateAuthURL(state, codeChallenge)
 
-  console.log(url)
+  try {
+    await redis.set(`auth:state:${state}`, codeVerifier, 'EX', 300)
+  } catch (e) {
+    console.error('레디스 에러: ', e)
+    throw new InternalServerErrorException('임시 인증 정보 저장 중 문제가 발생했습니다.')
+  }
 
   res.redirect(url, {
     statusCode: 302,
