@@ -100,30 +100,44 @@ export class Server {
     const url = new URL(`http://localhost:3000${req.url}`)
     let idx = 0
 
+    // 재귀호출함
     const next = async (err) => {
+      // 내부 에러 처리
       if (err) {
         if (err instanceof HttpException) {
-          return res.json(err.statusCode, {
-            message: err.message,
-            error: err.error,
-          }, err.statusCode)
+          return res.json(
+            err.statusCode,
+            {
+              message: err.message,
+              error: err.error,
+            },
+            err.statusCode,
+          )
         }
 
-        return res.json({
-          message: '알 수 없는 문제가 발생했습니다.',
-          error: '내부 서버 오류',
-        }, 500)
+        return res.json(
+          {
+            message: '알 수 없는 문제가 발생했습니다.',
+            error: '내부 서버 오류',
+          },
+          500,
+        )
       }
 
       try {
         const route = this.routes[idx++]
+        // 배열 넘어가서 undefined임. 라우트 미존재
         if (!route) {
-          return res.json({
-            message: '요청한 정보를 찾을 수 없습니다.',
-            error: '리소스를 찾을 수 없음',
-          }, 404)
+          return res.json(
+            {
+              message: '요청한 정보를 찾을 수 없습니다.',
+              error: '리소스를 찾을 수 없음',
+            },
+            404,
+          )
         }
 
+        // 미들웨어 처리
         if (route.method === null) {
           const handler = route.path.exec(url)
           if (handler) {
@@ -136,10 +150,16 @@ export class Server {
           }
         }
 
+        // 라우팅 처리
         if (route.method === req.method) {
+          // 패스 매칭
           const handler = route.path.exec(url)
+
           if (handler) {
-            req.params = handler.pathname.groups
+            // req 쿼리스트링
+            req.query = handler.search?.groups || {}
+            req.params = handler.pathname?.groups || {}
+
             const result = route.handler(req, res)
             if (result instanceof Promise) {
               await result
