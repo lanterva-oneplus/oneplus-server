@@ -1,4 +1,4 @@
-import { HttpException } from './http.exception.js'
+import HttpException from './http.exception.js'
 
 export default class RequestTimeoutException extends HttpException {
   constructor(message = '', error = '요청 시간 초과') {
