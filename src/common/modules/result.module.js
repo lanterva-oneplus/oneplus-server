@@ -1,7 +1,14 @@
 export class Result {
   /** @type {boolean} */
   success
-  /** @type {any} */
+
+  /**
+   * @typedef {object} dataResult
+   * @property {string} message
+   * @property {[key: string]: any}
+   */
+
+  /**  @type {dataResult} */
   data
   /** @type {any} */
   error
