@@ -40,6 +40,11 @@ export default class Result {
     return new Result(true, { message: data.message }, null)
   }
 
+  /**
+   * 
+   * @param {FailResult} error 
+   * @returns {Result.fail}
+   */
   static fail(error) {
     return new Result(false, null, { message: error.message, errorCode: error.errorCode })
   }
