@@ -90,6 +90,39 @@ export class Server {
       res.statusCode = option.statusCode || 302
       res.end()
     }
+
+    /**
+     * @param {object} data
+     * @param {string} message
+     * @param {number} status
+     */
+    res['sendSuccess'] = (data, message, status = 200) => {
+      return res.json(
+        {
+          status: status,
+          success: true,
+          message: message,
+          data: data,
+        },
+        status,
+      )
+    }
+
+    /**
+     * @param {HttpException} httpError
+     * @param {number} status
+     */
+    res['sendError'] = (httpError, status = 400) => {
+      return res.json(
+        {
+          status: status,
+          success: false,
+          message: httpError.message,
+          error: httpError.error,
+        },
+        status,
+      )
+    }
   }
 
   /**
