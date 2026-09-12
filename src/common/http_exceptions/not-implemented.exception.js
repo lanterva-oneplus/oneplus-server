@@ -1,4 +1,4 @@
-import { HttpException } from './http.exception.js'
+import HttpException from './http.exception.js'
 
 export default class NotImplementedException extends HttpException {
   constructor(message = '', error = '구현되지 않음') {
