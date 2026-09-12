@@ -1,22 +1,30 @@
-export class Result {
+export default class Result {
   /** @type {boolean} */
   success
 
   /**
-   * @typedef {object} dataResult
+   * @typedef {object} SuccessResult
    * @property {string} message
    * @property {[key: string]: any}
    */
 
   /**  @type {dataResult} */
   data
-  /** @type {any} */
+
+  /**
+   * @typedef {object} FailResult
+   * @property {string} message
+   * @property {string} errorCode
+   * @property {[key: string]: any}
+   */
+
+  /** @type {FailResult} */
   error
 
   /**
    * @param {boolean} success
-   * @param {any} [data]
-   * @param {any} [error]
+   * @param {SuccessResult} [data]
+   * @param {FailResult} [error]
    */
   constructor(success, data, error) {
     this.success = success
@@ -24,11 +32,15 @@ export class Result {
     this.error = error
   }
 
+  /**
+   * @param {SuccessResult} data
+   * @returns {Result.success}
+   */
   static success(data) {
-    return new Result(true, data, null)
+    return new Result(true, { message: data.message }, null)
   }
 
   static fail(error) {
-    return new Result(false, null, error)
+    return new Result(false, null, { message: error.message, errorCode: error.errorCode })
   }
 }
