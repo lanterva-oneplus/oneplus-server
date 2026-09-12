@@ -48,6 +48,7 @@ export class Server {
    * @param { http.ServerResponse } res
    */
   #setContext(req, res) {
+    // response 콘텍스트
     res['json'] = (data, status = 200) => {
       res.setHeader('Content-Type', 'application/json')
       res.statusCode = status
@@ -130,7 +131,7 @@ export class Server {
    * @param { http.ServerResponse } res
    */
   #handle(req, res) {
-    const url = new URL(`http://localhost:3000${req.url}`)
+    const url = new URL(process.env.DEFAULT_PATH + req.url)
     let idx = 0
 
     // 재귀호출함
@@ -190,7 +191,19 @@ export class Server {
 
           if (handler) {
             // req 쿼리스트링
-            req.query = handler.search?.groups || {}
+            /** @returns {{[query: string]: string}} */
+            const getQueries = () => {
+              const queries = url.search.slice(1).split('&')
+              const result = queries.reduce((prev, current) => {
+                const kv = current.split('=')
+                prev[kv[0]] = kv[1]
+                return prev
+              }, {})
+              return result
+            }
+            req.query = getQueries() || {}
+
+            // req 파라미터
             req.params = handler.pathname?.groups || {}
 
             const result = route.handler(req, res)
