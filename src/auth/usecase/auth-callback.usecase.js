@@ -30,14 +30,19 @@ const authCallback = async (req, res) => {
   if (!callbackCode) return res.sendError(new ForbiddenException('인증 정보가 누락되었습니다'), 403)
 
   /** @type {string} */
-  const codeVerifier = await redis.get(`auth:state:${callbackState}`)
-  if (!codeVerifier) return res.sendError(new ForbiddenException('임시 인증값을 검증에 실패했습니다.'), 403)
-
+  let codeVerifier
+  try {
+    codeVerifier = await redis.getdel(`auth:state:${callbackState}`)
+    if (!codeVerifier) return res.sendError(new ForbiddenException('임시 인증값을 검증에 실패했습니다.'), 403)
+  } catch (e) {
+    throw new InternalServerErrorException('임시 인증 정보를 만료시키는 중 문제가 발생했습니다.')
+  }
+  
   const oAuthService = new OAuthService()
-  const result = await oAuthService.getUserInfo(callbackCode)
+  const result = await oAuthService.getUserInfo(callbackCode, codeVerifier)
 
   if (!result.success) {
-    switch (result.errorCode) {
+    switch (result.error.errorCode) {
       case 'invalid_grant':
         throw new ForbiddenException('인증 정보가 만료되었거나 일치하지 않습니다.')
       case 'invalid_client':
@@ -49,10 +54,12 @@ const authCallback = async (req, res) => {
         throw new ForbiddenException('사용자 정보 요청을 위한 정보가 잘못되었거나 만료되었습니다.')
       case 'PERMISSION_DENIED':
         throw new InternalServerErrorException('서버에서 사용자 정보를 요청했으나 거부되었습니다.')
+      default:
+        throw new InternalServerErrorException('서버 에러', result.error)
     }
   }
 
-  return res.sendSuccess(result.data, '사용자 정보를 성공적으로 불러왔습니다.', 200)
+  return res.sendSuccess(result.data.userInfo, '사용자 정보를 성공적으로 불러왔습니다.', 200)
 }
 
 export default authCallback
