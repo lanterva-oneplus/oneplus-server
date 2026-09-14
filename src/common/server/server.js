@@ -1,6 +1,8 @@
 import http from 'node:http'
 import { Router } from './router.js'
 import HttpException from '../http_exceptions/http.exception.js'
+import InternalServerErrorException from '../http_exceptions/internal-server-error.exception.js'
+import NotFoundException from '../http_exceptions/not-found.exception.js'
 
 export class Server {
   /**
@@ -113,7 +115,7 @@ export class Server {
      * @param {HttpException} httpError
      * @param {number} status
      */
-    res['sendError'] = (httpError, status = 400) => {
+    res['sendError'] = (httpError, status = 500) => {
       return res.json(
         {
           status: status,
@@ -139,36 +141,17 @@ export class Server {
       // 내부 에러 처리
       if (err) {
         if (err instanceof HttpException) {
-          return res.json(
-            err.statusCode,
-            {
-              message: err.message,
-              error: err.error,
-            },
-            err.statusCode,
-          )
+          return res.sendError(err, err.statusCode)
         }
 
-        return res.json(
-          {
-            message: '알 수 없는 문제가 발생했습니다.',
-            error: '내부 서버 오류',
-          },
-          500,
-        )
+        return res.sendError(new InternalServerErrorException(err.message), 500)
       }
 
       try {
         const route = this.routes[idx++]
         // 배열 넘어가서 undefined임. 라우트 미존재
         if (!route) {
-          return res.json(
-            {
-              message: '요청한 정보를 찾을 수 없습니다.',
-              error: '리소스를 찾을 수 없음',
-            },
-            404,
-          )
+          return res.sendError(new NotFoundException('라우트를 찾을 수 없습니다.'), 404)
         }
 
         // 미들웨어 처리
@@ -193,13 +176,7 @@ export class Server {
             // req 쿼리스트링
             /** @returns {{[query: string]: string}} */
             const getQueries = () => {
-              const queries = url.search.slice(1).split('&')
-              const result = queries.reduce((prev, current) => {
-                const kv = current.split('=')
-                prev[kv[0]] = kv[1]
-                return prev
-              }, {})
-              return result
+              
             }
             req.query = getQueries() || {}
 
