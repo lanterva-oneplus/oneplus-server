@@ -1,36 +1,43 @@
--- 사용자 정보
-create table
-  if not exists users (
-    id bigserial primary key,
-    sub varchar(255) not null unique, -- 자동 인덱싱처리
-    email varchar(254) not null,
-    nickname varchar(32) not null,
-    profile varchar(2048) not null,
+-- 1. 사용자 정보 테이블
+CREATE TABLE
+  IF NOT EXISTS users (
+    id bigserial PRIMARY KEY,
+    sub varchar(255) NOT NULL UNIQUE,
+    email varchar(254) NOT NULL,
+    nickname varchar(32) NOT NULL,
+    profile varchar(2048) NOT NULL
   );
 
--- 트랙 정보
-create table
-  if not exists tracks (
-    id bigserial primary key,
-    track_name varchar(64) not null,
-    length_sec smallint not null check (length_sec >= 0),
-    track_path varchar(1028) not null,
-    added_date date default CURRENT_DATE
+-- 1-2. 사용자 상태 enum 생성
+CREATE TYPE user_status AS enum ('active', 'inactive', 'banned', 'deleted');
+
+-- 1-3. 컬럼추가
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS status user_status;
+
+-- 2. 트랙 정보 테이블
+CREATE TABLE
+  IF NOT EXISTS tracks (
+    id bigserial PRIMARY KEY,
+    track_name varchar(64) NOT NULL,
+    length_sec smallint NOT NULL CHECK (length_sec >= 0),
+    track_path varchar(1028) NOT NULL,
+    added_date date DEFAULT CURRENT_DATE
   );
 
--- 난이도 enum
-create type if not exists track_defficulty as enum ('easy', 'normal', 'hard', 'expert');
+-- 3. 난이도 enum 생성
+CREATE TYPE track_difficulty AS ENUM ('easy', 'normal', 'hard', 'expert');
 
--- 트랙 난이도별 정보
-create table
-  if not exists track_infos (
-    id bigserial primary key,
-    track_id bigserial not null,
-    difficulty track_defficulty not null,
-    note_count smallint not null check (note_count >= 0),
-    note jsonb not null,
-    foreign key (track_id) references tracks (id),
+-- 4. 트랙 난이도별 정보 테이블
+CREATE TABLE
+  IF NOT EXISTS track_infos (
+    id bigserial PRIMARY KEY,
+    track_id bigint NOT NULL,
+    difficulty track_difficulty NOT NULL,
+    note_count smallint NOT NULL CHECK (note_count >= 0),
+    note jsonb NOT NULL,
+    FOREIGN KEY (track_id) REFERENCES tracks (id)
   );
 
--- 트랙 난이도 중복 방지
-create index if not exists idx_track_id_difficulty on track_infos (track_id, difficulty);
+-- 5. 트랙 난이도 중복 방지 및 성능 향상을 위한 복합 인덱스
+CREATE INDEX IF NOT EXISTS idx_track_id_difficulty ON track_infos (track_id, difficulty);
