@@ -33,7 +33,7 @@ export class OAuthService {
       client_id: this.#clientId,
       redirect_uri: this.#redirectURI,
       response_type: 'code',
-      scope: 'openid profile email',
+      scope: 'profile email',
       state: state,
       code_challenge: codeChallenge,
       code_challenge_method: 'S256',
@@ -43,12 +43,11 @@ export class OAuthService {
   }
 
   /**
-   * @param {string} realState
-   * @param {string} callbackState
+   * @param {string} codeVerifier
    * @param {string} code
    * @returns {Result}
    */
-  async getUserInfo(code) {
+  async getUserInfo(code, codeVerifier) {
     // 토큰교환
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -58,9 +57,10 @@ export class OAuthService {
         client_secret: this.#clientSecret,
         redirect_uri: this.#redirectURI,
         grant_type: 'authorization_code',
+        code_verifier: codeVerifier,
       }),
     })
-
+    
     const tokenData = await tokenResponse.json()
     if (!tokenResponse.ok) {
       return Result.fail({
@@ -73,7 +73,7 @@ export class OAuthService {
     // 액세스토큰으로 유저정보 요청
     try {
       // 에러처리
-      const accessToken = tokenData['access_Token']
+      const accessToken = tokenData['access_token']
       if (!accessToken) return Result.fail({ message: '액세스 토큰 누락', accessToken: accessToken })
 
       const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
