@@ -8,7 +8,7 @@ export default class Result {
    * @property {[key: string]: any}
    */
 
-  /**  @type {dataResult} */
+  /**  @type {SuccessResult} */
   data
 
   /**
@@ -37,7 +37,7 @@ export default class Result {
    * @returns {Result.success}
    */
   static success(data) {
-    return new Result(true, { message: data.message }, null)
+    return new Result(true, data, null)
   }
 
   /**
@@ -46,6 +46,6 @@ export default class Result {
    * @returns {Result.fail}
    */
   static fail(error) {
-    return new Result(false, null, { message: error.message, errorCode: error.errorCode })
+    return new Result(false, null, error)
   }
 }
