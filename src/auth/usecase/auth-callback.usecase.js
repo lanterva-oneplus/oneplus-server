@@ -9,57 +9,61 @@ import redis from '../../common/modules/redis.module.js'
  * @param {http.ServerResponse} res
  */
 const authCallback = async (req, res) => {
-  const isError = req.query['error']
+  // 콜백 에러처리
+  const error = req.query['error']
 
-  if (isError) {
-    const errorCode = req.query['error_description']
-    // 사용자 인증 거부
-    if (errorCode === 'access_denied') {
-      return res.sendError(new ForbiddenException('사용자가 인증을 거절했습니다.'), 403)
-    }
-    // 나머지 서버 문제
-    return res.sendError(new UnauthorizedException('서버에 문제가 발생했습니다.', errorCode), 500)
+  if (error) {
+    if (error === 'access_denied') throw new ForbiddenException('사용자가 인증을 거절했습니다.')
+    throw new UnauthorizedException('서버에 문제가 발생했습니다.', req.query['error_description'])
   }
 
+  // 토큰 교환 정보 검증
   /** @type {string} */
   const callbackState = req.query['state']
-  if (!callbackState) return res.sendError(new ForbiddenException('인증 정보가 누락되었습니다'), 403)
+  if (!callbackState) throw new ForbiddenException('인증 정보가 누락되었습니다')
 
   /** @type {string} */
   const callbackCode = req.query['code']
-  if (!callbackCode) return res.sendError(new ForbiddenException('인증 정보가 누락되었습니다'), 403)
+  if (!callbackCode) throw new ForbiddenException('인증 정보가 누락되었습니다')
 
-  /** @type {string} */
-  let codeVerifier
-  try {
-    codeVerifier = await redis.getdel(`auth:state:${callbackState}`)
-    if (!codeVerifier) return res.sendError(new ForbiddenException('임시 인증값을 검증에 실패했습니다.'), 403)
-  } catch (e) {
-    throw new InternalServerErrorException('임시 인증 정보를 만료시키는 중 문제가 발생했습니다.')
-  }
-  
+  const codeVerifier = await redis.get(`auth:state:${callbackState}`).catch((err) => {
+    throw new InternalServerErrorException(err)
+  })
+
+  // oauth 객체
   const oAuthService = new OAuthService()
-  const result = await oAuthService.getUserInfo(callbackCode, codeVerifier)
 
-  if (!result.success) {
-    switch (result.error.errorCode) {
-      case 'invalid_grant':
-        throw new ForbiddenException('인증 정보가 만료되었거나 일치하지 않습니다.')
-      case 'invalid_client':
-      case 'invalid_request':
-      case 'unauthorized_client':
-      case 'unsupported_grant_type':
-        throw new InternalServerErrorException('서버에서 사용자 인증 중 문제가 발생했습니다.')
-      case 'UNAUTHENTICATED':
-        throw new ForbiddenException('사용자 정보 요청을 위한 정보가 잘못되었거나 만료되었습니다.')
-      case 'PERMISSION_DENIED':
-        throw new InternalServerErrorException('서버에서 사용자 정보를 요청했으나 거부되었습니다.')
-      default:
-        throw new InternalServerErrorException('서버 에러', result.error)
+  // 토큰교환
+  const tradeTokenResult = await oAuthService.tradeToken(callbackCode, codeVerifier)
+
+  const delResult = await redis.del(`auth:state:${callbackState}`).catch((err) => {
+    throw new InternalServerErrorException(err)
+  })
+
+  if (delResult < 1) throw new InternalServerErrorException('임시 인증 정보를 만료하는 중 문제가 발생했습니다.')
+
+  if (!tradeTokenResult.success) {
+    const code = tradeTokenResult.error.errorCode
+    if (code === 'invalid_grant') {
+      throw new ForbiddenException('인증 정보가 만료되었거나 일치하지 않습니다.', tradeTokenResult.error.errorCode)
     }
+    throw new InternalServerErrorException('서버 에러가 발생했습니다.', code)
   }
 
-  return res.sendSuccess(result.data.userInfo, '사용자 정보를 성공적으로 불러왔습니다.', 200)
+  // 사용자 정보 요청
+  const getUserInfoResult = await oAuthService.getUserInfo(tradeTokenResult.data.accessToken)
+
+  if (!getUserInfoResult.success) {
+    /** @type {number} */
+    const code = getUserInfoResult.error.errorCode
+    /** @type {string} */
+    const message = getUserInfoResult.error.errorMessage
+
+    console.error(`code: ${code}\nerrorMessage: ${message}`)
+    throw new InternalServerErrorException('인증 정보에 문제가 있습니다.')
+  }
+
+  return res.sendSuccess(getUserInfoResult.data.userInfo, '사용자 정보를 성공적으로 불러왔습니다.', 200)
 }
 
 export default authCallback

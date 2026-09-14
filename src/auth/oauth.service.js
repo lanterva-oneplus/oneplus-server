@@ -47,7 +47,7 @@ export class OAuthService {
    * @param {string} code
    * @returns {Result}
    */
-  async getUserInfo(code, codeVerifier) {
+  async tradeToken(code, codeVerifier) {
     // 토큰교환
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -60,7 +60,7 @@ export class OAuthService {
         code_verifier: codeVerifier,
       }),
     })
-    
+
     const tokenData = await tokenResponse.json()
     if (!tokenResponse.ok) {
       return Result.fail({
@@ -70,36 +70,39 @@ export class OAuthService {
       })
     }
 
-    // 액세스토큰으로 유저정보 요청
-    try {
-      // 에러처리
-      const accessToken = tokenData['access_token']
-      if (!accessToken) return Result.fail({ message: '액세스 토큰 누락', accessToken: accessToken })
+    const accessToken = tokenData['access_token']
+    if (!accessToken) return Result.fail({ message: '액세스 토큰 누락', accessToken: accessToken })
 
-      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+    return Result.success({ message: '액세스 토큰을 성공적으로 요청했습니다.', accessToken: accessToken })
+  }
+
+  /**
+   *
+   * @param {string} accessToken
+   * @returns {Result}
+   */
+  async getUserInfo(accessToken) {
+    const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+    const userInfoData = await userInfoResponse.json()
+
+    if (!userInfoResponse.ok) {
+      return Result.fail({
+        message: '유저 정보 요청 실패',
+        errorCode: userInfoData.error.code,
+        errorMessage: userInfoData.error.message,
       })
-
-      const userInfoData = await userInfoResponse.json()
-
-      if (!userInfoResponse.ok) {
-        return Result.fail({
-          message: '유저 정보 요청 실패',
-          errorCode: userInfoResponse.status,
-          errorDescription: userInfoData.message,
-        })
-      }
-
-      // 유저 정보 반환
-      return Result.success({
-        message: '사용자 정보를 성공적으로 반환',
-        userInfo: userInfoData,
-      })
-    } catch (e) {
-      return Result.fail({ message: 'json 얻는 중 문제 발생', err: tokenData.error })
     }
+
+    // 유저 정보 반환
+    return Result.success({
+      message: '사용자 정보를 성공적으로 반환',
+      userInfo: userInfoData,
+    })
   }
 }
