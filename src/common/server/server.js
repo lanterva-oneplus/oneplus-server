@@ -175,10 +175,7 @@ export class Server {
           if (handler) {
             // req 쿼리스트링
             /** @returns {{[query: string]: string}} */
-            const getQueries = () => {
-              
-            }
-            req.query = getQueries() || {}
+            req.query = Object.fromEntries(new URLSearchParams(req.url.split('?')[1])) || {}
 
             // req 파라미터
             req.params = handler.pathname?.groups || {}
