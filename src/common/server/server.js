@@ -205,7 +205,7 @@ export class Server {
   listen(port = 3000) {
     https
       .createServer(
-        { key: fs.readFileSync('./localhost-key.pem'), cert: fs.readFileSync('./localhost.pem') },
+        { key: fs.readFileSync(process.env.HTTPS_CA_KEY), cert: fs.readFileSync(process.env.HTTPS_CA) },
         (req, res) => {
           this.#setContext(req, res)
           this.#handle(req, res)
