@@ -3,6 +3,9 @@ import ForbiddenException from '../../common/http_exceptions/forbidden.exception
 import InternalServerErrorException from '../../common/http_exceptions/internal-server-error.exception.js'
 import { OAuthService } from '../oauth.service.js'
 import redis from '../../common/modules/redis.module.js'
+import AuthService from '../auth.service.js'
+import { sign } from '../../common/modules/jwt.module.js'
+import { setCookie } from '../../common/modules/cookie.module.js'
 
 /**
  * @param {http.IncomingMessage} req
@@ -63,7 +66,59 @@ const authCallback = async (req, res) => {
     throw new InternalServerErrorException('인증 정보에 문제가 있습니다.')
   }
 
-  return res.sendSuccess(getUserInfoResult.data.userInfo, '사용자 정보를 성공적으로 불러왔습니다.', 200)
+  const authService = new AuthService()
+
+  // 사용자 정보 upsert
+  const userResult = await authService.upsert(getUserInfoResult.data.userInfo)
+  const user = userResult.data.user
+
+  // 액세스토큰 jwt 생성
+  const accessTokenJWT = sign(
+    {
+      nickname: user.nickname,
+      profile: user.profile,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      iss: 'oneplus',
+      sub: user.id,
+      exp: 60 * 15,
+      iat: Math.floor(Date.now() / 1000),
+    },
+  )
+
+  // 리프래시토큰 jwt 생성
+  const refreshToken = crypto.randomUUID()
+
+  const refreshTokenJWT = sign({}, process.env.REFRESH_TOKEN_SECRET, {
+    iss: 'oneplus',
+    sub: user.id,
+    jti: refreshToken,
+    exp: 60 * 60 * 24 * 30,
+    iat: Math.floor(Date.now() / 1000),
+  })
+
+  // 15일 TTL
+  await redis.set(`session:${refreshToken}`, '', 'EX', 60 * 60 * 24 * 30)
+
+  // 쿠키 넣기
+  void setCookie(res, process.env.ACCESS_COOKIE_NAME, accessTokenJWT, {
+    path: '/',
+    maxAge: 60 * 15,
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Lax',
+  })
+
+  void setCookie(res, process.env.REFRESH_COOKIE_NAME, refreshTokenJWT, {
+    path: '/api/auth/refresh',
+    maxAge: 60 * 60 * 24 * 30,
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Lax',
+  })
+
+  return res.redirect(process.env.DEFAULT_PATH)
 }
 
 export default authCallback
