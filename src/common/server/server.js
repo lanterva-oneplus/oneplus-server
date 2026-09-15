@@ -1,4 +1,5 @@
-import http from 'node:http'
+import https from 'node:https'
+import fs from 'fs'
 import { Router } from './router.js'
 import HttpException from '../http_exceptions/http.exception.js'
 import InternalServerErrorException from '../http_exceptions/internal-server-error.exception.js'
@@ -202,11 +203,14 @@ export class Server {
    * @param { number } port
    */
   listen(port = 3000) {
-    http
-      .createServer((req, res) => {
-        this.#setContext(req, res)
-        this.#handle(req, res)
-      })
+    https
+      .createServer(
+        { key: fs.readFileSync('./localhost-key.pem'), cert: fs.readFileSync('./localhost.pem') },
+        (req, res) => {
+          this.#setContext(req, res)
+          this.#handle(req, res)
+        },
+      )
       .listen(port, () => {
         console.log('Start Server')
       })
