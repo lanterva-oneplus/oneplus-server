@@ -43,4 +43,4 @@ build/
 .env
 
 # pem
-.pem
+*.pem
