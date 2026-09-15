@@ -14,7 +14,7 @@ export default class Result {
   /**
    * @typedef {object} FailResult
    * @property {string} message
-   * @property {string} errorCode
+   * @property {string} [errorCode]
    * @property {[key: string]: any}
    */
 
