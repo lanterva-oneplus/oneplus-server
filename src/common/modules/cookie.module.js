@@ -1,12 +1,12 @@
 /**
  * @typedef {object} CookieOptions
- * @property {string} [Path] - 쿠키 경로
- * @property {string} [Domain] - 쿠키 도메인
- * @property {number} [MaxAge] - 쿠키 유효 기간 (초 단위)
- * @property {Date} [Expires] - 쿠키 만료 날짜
- * @property {boolean} [HttpOnly] - HTTP 전송 전용 여부
- * @property {boolean} [Secure] - HTTPS 전송 전용 여부
- * @property {'Strict' | 'Lax' | 'None'} [SameSite] - SameSite 설정
+ * @property {string} [path] - 쿠키 경로
+ * @property {string} [domain] - 쿠키 도메인
+ * @property {number} [maxAge] - 쿠키 유효 기간 (초 단위)
+ * @property {Date} [expires] - 쿠키 만료 날짜
+ * @property {boolean} [httpOnly] - HTTP 전송 전용 여부
+ * @property {boolean} [secure] - HTTPS 전송 전용 여부
+ * @property {'Strict' | 'Lax' | 'None'} [sameSite] - SameSite 설정
  */
 
 /**
@@ -17,13 +17,25 @@
  * @param { CookieOptions } [option]
  */
 export const setCookie = (res, name, value, option) => {
-  let cookie = ''
+  const encodedName = encodeURIComponent(name)
+  const encodedValue = encodeURIComponent(value)
+  let cookie = `${encodedName}=${encodedValue}`
 
-  if (value.match(/[;=]/g)) throw new Error('허용되지 않는 문자가 포함되어있습니다.')
-  cookie += `${name}=${value}`
+  const mappingKeys = {
+    path: 'Path',
+    domain: 'Domain',
+    maxAge: 'Max-Age',
+    expires: 'Expires',
+    httpOnly: 'HttpOnly',
+    secure: 'Secure',
+    sameSite: 'SameSite',
+  }
 
-  if (option) Object.keys(option).forEach((key) => (cookie += `; ${key}=${option[key]}`))
-  res.setHeader('Set-Cookie', cookie)
+  if (option) Object.keys(option).forEach((key) => (cookie += `; ${mappingKeys[key]}=${option[key]}`))
+
+  const existsCookies = res.getHeader('Set-Cookie')
+  if (existsCookies) return res.setHeader('Set-Cookie', [...existsCookies, cookie])
+  else return res.setHeader('Set-Cookie', [cookie])
 }
 
 /**
@@ -34,6 +46,8 @@ export const setCookie = (res, name, value, option) => {
  */
 export const getCookie = (req, name) => {
   if (!req.headers.cookie) return undefined
+
+  const encodedName = encodeURIComponent(name)
 
   const cookies = {}
   req.headers.cookie.split('; ').forEach((c) => {
