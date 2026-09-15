@@ -25,10 +25,8 @@ export const sign = (payload, secret, option) => {
   if (typeof payload !== 'object') throw new Error('페이로드는 object 타입이여야 합니다.')
   Object.keys(option).forEach((key) => (payload[key] = option[key]))
 
-  const jwt = new JWT()
-
-  const encodedHeader = jwt.encodeBase64(header)
-  const encodedPayload = jwt.encodeBase64(payload)
+  const encodedHeader = encodeBase64(header)
+  const encodedPayload = encodeBase64(payload)
   const signature = crypto.createHmac('sha256', secret).update(`${encodedHeader}.${encodedPayload}`).digest('hex')
 
   return `${encodedHeader}.${encodedPayload}.${signature}`

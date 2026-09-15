@@ -16,11 +16,10 @@ const checkConnection = async () => {
     const client = await pool.connect()
     console.log('connected pg')
     client.release()
-  } catch(e) {
+  } catch (e) {
     console.error('pg error: ', e.message)
-    process.exit(1)
-  } finally {
     await pool.end()
+    process.exit(1)
   }
 }
 
