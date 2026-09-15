@@ -45,20 +45,15 @@ export const setCookie = (res, name, value, option) => {
  * @returns { {name: string, value: string} | undefined }
  */
 export const getCookie = (req, name) => {
-  if (!req.headers.cookie) return undefined
+  /** @type {string[]} */
+  const cookies = req.headers['cookie'].split('; ')
+  console.log(cookies)
+  if (!cookies) return undefined
 
   const encodedName = encodeURIComponent(name)
-
-  const cookies = {}
-  req.headers.cookie.split('; ').forEach((c) => {
-    const [name, value] = c.split('=')
-    cookies[name] = decodeURIComponent(v)
-  })
-
-  if (cookies[name]) {
-    return { name, value: cookies[name] }
-  }
-  return undefined
+  const idx = cookies.find(cookie => cookie.split('=')[0] === encodedName)
+  const [cookieName, cookieValue] = idx.split('=')
+  return { name: cookieName, value: cookieValue }
 }
 
 export const revokeCookie = (res, name) => {
