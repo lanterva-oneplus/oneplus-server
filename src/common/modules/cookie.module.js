@@ -51,9 +51,9 @@ export const getCookie = (req, name) => {
   if (!cookies) return undefined
 
   const encodedName = encodeURIComponent(name)
-  const idx = cookies.find(cookie => cookie.split('=')[0] === encodedName)
+  const idx = cookies.find((cookie) => cookie.split('=')[0] === encodedName)
   const [cookieName, cookieValue] = idx.split('=')
-  return { name: cookieName, value: cookieValue }
+  return { name: decodeURIComponent(cookieName), value: decodeURIComponent(cookieValue) }
 }
 
 export const revokeCookie = (res, name) => {
