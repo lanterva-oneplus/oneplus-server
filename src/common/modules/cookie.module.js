@@ -15,6 +15,7 @@
  * @param { string } name
  * @param { string } value
  * @param { CookieOptions } [option]
+ * @returns { void }
  */
 export const setCookie = (res, name, value, option) => {
   const encodedName = encodeURIComponent(name)
@@ -34,28 +35,40 @@ export const setCookie = (res, name, value, option) => {
   if (option) Object.keys(option).forEach((key) => (cookie += `; ${mappingKeys[key]}=${option[key]}`))
 
   const existsCookies = res.getHeader('Set-Cookie')
-  if (existsCookies) return res.setHeader('Set-Cookie', [...existsCookies, cookie])
-  else return res.setHeader('Set-Cookie', [cookie])
+  if (existsCookies) res.setHeader('Set-Cookie', [...existsCookies, cookie])
+  else res.setHeader('Set-Cookie', [cookie])
 }
 
 /**
  *
  * @param { http.IncomingMessage } req
  * @param { string } name
- * @returns { {name: string, value: string} | undefined }
+ * @returns { {name: string, value: string} | false }
  */
 export const getCookie = (req, name) => {
   /** @type {string[]} */
   const cookies = req.headers['cookie'].split('; ')
-  console.log(cookies)
-  if (!cookies) return undefined
+  if (!cookies) return false
 
   const encodedName = encodeURIComponent(name)
-  const idx = cookies.find((cookie) => cookie.split('=')[0] === encodedName)
-  const [cookieName, cookieValue] = idx.split('=')
+  const cookie = cookies.find((cookie) => cookie.split('=')[0] === encodedName)
+  const [cookieName, cookieValue] = cookie.split('=')
   return { name: decodeURIComponent(cookieName), value: decodeURIComponent(cookieValue) }
 }
 
-export const revokeCookie = (res, name) => {
+/**
+ *
+ * @param { http.ServerResponse } req
+ * @param { http.IncomingMessage } res
+ * @param { string } name
+ * @returns { void | false }
+ */
+export const revokeCookie = (req, res, name) => {
+  /** @type {string[]} */
+  const cookies = req.headers['cookie'].split('; ')
+  if (!cookies) return undefined
+  
+  const encodedName = encodeURIComponent(name)
+  const cookie = cookies.find((cookie) => cookie.split('=')[0] === encodedName)
   res.setHeader('Set-Cookie', `${name}=; Max-Age=0`)
 }
