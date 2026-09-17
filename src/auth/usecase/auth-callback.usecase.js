@@ -73,50 +73,17 @@ const authCallback = async (req, res) => {
   const user = userResult.data.user
 
   // 액세스토큰 jwt 생성
-  const accessTokenJWT = sign(
-    {
-      nickname: user.nickname,
-      profile: user.profile,
-    },
-    process.env.ACCESS_TOKEN_SECRET,
-    {
-      iss: 'oneplus',
-      sub: user.id,
-      exp: 60 * 15,
-      iat: Math.floor(Date.now() / 1000),
-    },
-  )
+  const accessTokenJWT = authService.createAccessTokenJWT({ nickname: user.nickname, profile: user.profile })
 
   // 리프래시토큰 jwt 생성
-  const refreshToken = crypto.randomUUID()
-
-  const refreshTokenJWT = sign({}, process.env.REFRESH_TOKEN_SECRET, {
-    iss: 'oneplus',
-    sub: user.id,
-    jti: refreshToken,
-    exp: 60 * 60 * 24 * 30,
-    iat: Math.floor(Date.now() / 1000),
-  })
+  const { jti, refreshTokenJWT } = authService.createRefreshTokenJWT(user.id)
 
   // 15일 TTL
-  await redis.set(`session:${refreshToken}`, '', 'EX', 60 * 60 * 24 * 30)
+  await redis.set(`session:${jti}`, '', 'EX', 60 * 60 * 24 * 30)
 
   // 쿠키 넣기
-  void setCookie(res, process.env.ACCESS_COOKIE_NAME, accessTokenJWT, {
-    path: '/',
-    maxAge: 60 * 15,
-    httpOnly: true,
-    secure: true,
-    sameSite: 'Lax',
-  })
-
-  void setCookie(res, process.env.REFRESH_COOKIE_NAME, refreshTokenJWT, {
-    path: '/api/auth/refresh',
-    maxAge: 60 * 60 * 24 * 30,
-    httpOnly: true,
-    secure: true,
-    sameSite: 'Lax',
-  })
+  authService.setAccessTokenJWTCookie(res, accessTokenJWT)
+  authService.setRefreshTokenJWTCookie(res, refreshTokenJWT)
 
   return res.redirect(process.env.DEFAULT_PATH)
 }
