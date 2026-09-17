@@ -46,7 +46,7 @@ export default class AuthService {
    * @param {UserInfo} userInfo
    * @returns {string}
    */
-  async createAccessTokenJWT(userInfo) {
+  createAccessTokenJWT(userInfo) {
     return sign(
       {
         nickname: userInfo.nickname,
@@ -66,24 +66,10 @@ export default class AuthService {
    * @param {http.ServerResponse} res
    * @param {string} accessTokenJWT
    */
-  async setAccessTokenJWTCookie(res, accessTokenJWT) {
+  setAccessTokenJWTCookie(res, accessTokenJWT) {
     void setCookie(res, process.env.ACCESS_COOKIE_NAME, accessTokenJWT, {
       path: '/',
       maxAge: 60 * 15,
-      httpOnly: true,
-      secure: true,
-      sameSite: 'Lax',
-    })
-  }
-
-  /**
-   * @param {http.ServerResponse} res
-   * @param {string} refreshTokenJWT
-   */
-  async setRefreshTokenJWTCookie(res, refreshTokenJWT) {
-    void setCookie(res, process.env.REFRESH_COOKIE_NAME, refreshTokenJWT, {
-      path: '/api/auth/refresh',
-      maxAge: 60 * 60 * 24 * 30,
       httpOnly: true,
       secure: true,
       sameSite: 'Lax',
@@ -98,7 +84,7 @@ export default class AuthService {
    * @param {string} userId
    * @returns {RefreshRes}
    */
-  async createRefreshTokenJWT(userId) {
+  createRefreshTokenJWT(userId) {
     const jti = crypto.randomUUID()
     const refreshTokenJWT = sign({}, process.env.REFRESH_TOKEN_SECRET, {
       iss: 'oneplus',
@@ -111,5 +97,19 @@ export default class AuthService {
       refreshTokenJWT: refreshTokenJWT,
       jti: jti,
     }
+  }
+
+  /**
+   * @param {http.ServerResponse} res
+   * @param {string} refreshTokenJWT
+   */
+  setRefreshTokenJWTCookie(res, refreshTokenJWT) {
+    void setCookie(res, process.env.REFRESH_COOKIE_NAME, refreshTokenJWT, {
+      path: '/api/auth/refresh',
+      maxAge: 60 * 60 * 24 * 30,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Lax',
+    })
   }
 }
