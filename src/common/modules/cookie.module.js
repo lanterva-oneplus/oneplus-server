@@ -63,12 +63,6 @@ export const getCookie = (req, name) => {
  * @param { string } name
  * @returns { void | false }
  */
-export const revokeCookie = (req, res, name) => {
-  /** @type {string[]} */
-  const cookies = req.headers['cookie'].split('; ')
-  if (!cookies) return undefined
-  
-  const encodedName = encodeURIComponent(name)
-  const cookie = cookies.find((cookie) => cookie.split('=')[0] === encodedName)
-  res.setHeader('Set-Cookie', `${name}=; Max-Age=0`)
+export const revokeCookie = (res, name) => {
+  res.setHeader('Set-Cookie', `${encodeURIComponent(name)}=; Max-Age=0`)
 }
