@@ -4,8 +4,6 @@ import InternalServerErrorException from '../../common/http_exceptions/internal-
 import { OAuthService } from '../oauth.service.js'
 import redis from '../../common/modules/redis.module.js'
 import AuthService from '../auth.service.js'
-import { sign } from '../../common/modules/jwt.module.js'
-import { setCookie } from '../../common/modules/cookie.module.js'
 
 /**
  * @param {http.IncomingMessage} req
@@ -74,7 +72,7 @@ const authCallback = async (req, res) => {
 
   // 액세스토큰 jwt 생성
   const accessTokenJWT = authService.createAccessTokenJWT({ nickname: user.nickname, profile: user.profile })
-
+  
   // 리프래시토큰 jwt 생성
   const { jti, refreshTokenJWT } = authService.createRefreshTokenJWT(user.id)
 

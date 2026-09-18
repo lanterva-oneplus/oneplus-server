@@ -20,7 +20,7 @@ const refresh = async (req, res) => {
     if (!refreshTokenJWTCookie) throw new ForbiddenException('로그인이 만료되었습니다', 'session_expired')
 
     // 리프래시 토큰 살아있음. 액세스 토큰 재발급 필요
-    const refreshTokenJWT = verify(refreshTokenJWTCookie, process.env.REFRESH_TOKEN_SECRET)
+    const refreshTokenJWT = verify(refreshTokenJWTCookie.value, process.env.REFRESH_TOKEN_SECRET)
     const [userId, leftSessionTimeSec] = await redis
       .pipeline()
       .get(`session:${refreshTokenJWT.jti}`)
@@ -31,11 +31,12 @@ const refresh = async (req, res) => {
         throw new InternalServerErrorException('사용자 정보 요청 중 서버에서 문제가 발생했습니다.')
       })
     if (leftSessionTimeSec === -2) throw new ForbiddenException('로그인이 만료되었습니다', 'session_expired')
-
+    
     const authService = new AuthService()
 
     // 사용자 정보 얻기
-    const userResult = await pool.query('select nickname, profile from users where id = $1', [userId]).catch((err) => {
+    const userResult = await pool.query('select nickname, profile from users where id = $1;', [userId]).catch((err) => {
+      console.error(err)
       throw new InternalServerErrorException('사용자 정보 요청 중 서버에서 문제가 발생했습니다.', 'failed_request_user_info')
     })
 
