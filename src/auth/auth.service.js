@@ -55,7 +55,7 @@ export default class AuthService {
       process.env.ACCESS_TOKEN_SECRET,
       {
         iss: 'oneplus',
-        sub: user.id,
+        sub: userInfo.id,
         exp: 60 * 15,
         iat: Math.floor(Date.now() / 1000),
       },

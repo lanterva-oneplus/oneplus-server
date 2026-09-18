@@ -1,6 +1,7 @@
 import { Router } from '../common/server/router.js'
-import authCallback from './usecase/auth-callback.usecase.js';
-import authEntry from './usecase/auth-entry.usecase.js';
+import authCallback from './usecase/auth-callback.usecase.js'
+import authEntry from './usecase/auth-entry.usecase.js'
+import refresh from './usecase/refresh.usecase.js'
 
 const authRouter = new Router()
 
@@ -13,7 +14,9 @@ authRouter.get('/callback', async (req, res) => {
   return await authCallback(req, res)
 })
 
-authRouter.post('/refresh', (req, res) => {})
+authRouter.get('/refresh', async (req, res) => {
+  return await refresh(req, res)
+})
 
 authRouter.post('/logout', (req, res) => {})
 
