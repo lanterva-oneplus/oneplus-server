@@ -98,8 +98,8 @@ const authCallback = async (req, res) => {
     iat: Math.floor(Date.now() / 1000),
   })
 
-  // 15일 TTL
-  await redis.set(`session:${refreshToken}`, '', 'EX', 60 * 60 * 24 * 30)
+  // 30일 TTL
+  await redis.set(`session:${jti}`, user.id, 'EX', 60 * 60 * 24 * 30)
 
   // 쿠키 넣기
   void setCookie(res, process.env.ACCESS_COOKIE_NAME, accessTokenJWT, {
