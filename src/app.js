@@ -1,25 +1,23 @@
-import authRouter from './auth/auth.controller.js'
-import { Router } from './common/server/router.js'
+import { Router } from './common/server/router.js';
 import { Server } from './common/server/server.js'
 
 const server = new Server()
-
-server.router('/api/auth', authRouter)
-
 const testRouter = new Router()
 
-testRouter.get('/q', (req, res) => {
-  const q = req.query['q']
-  console.log(q)
-  res.json(q)
+const testMiddleware = (req, res, next) => {
+  console.log('미들웨어 진입')
+  next()
+}
+
+testRouter.get('/', [testMiddleware], (req, res) => {
+  console.log('라우터 진입')
+  res.text('야르')
 })
 
-testRouter.get('/p/:id', (req, res) => {
-  const p = req.params
-  console.log(p)
-  res.json(p)
+testRouter.get('/t', [], (req, res) => {
+  res.text('야르2')
 })
 
-server.router('/t', testRouter)
+server.router('', testRouter)
 
 server.listen(3000)
