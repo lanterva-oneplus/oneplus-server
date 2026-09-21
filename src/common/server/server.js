@@ -7,23 +7,29 @@ import NotFoundException from '../http_exceptions/not-found.exception.js'
 
 export class Server {
   /**
+   * @typedef {(req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void | Promise<void>} Middleware
+   * @typedef {(req: http.IncomingMessage, res: http.ServerResponse) => void | Promise<void>} Handler
+   */
+
+  /**
    * @type {{
    * method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE' | null,
    * path: URLPattern,
-   * handler: (req: http.IncomingMessage, res: http.ServerResponse) => any
+   * middleware: Middleware[]
+   * handler: Handler
    * }[]}
    */
   routes = []
 
   /**
    * @param { string } path
-   * @param { (req: http.IncomingMessage, res: http.ServerResponse) => any } callback
+   * @param { Middleware } middleware
    */
-  use(path, callback) {
+  use(path, middleware) {
     this.routes.push({
       method: null,
       path: new URLPattern({ pathname: path }),
-      handler: callback,
+      handler: middleware,
     })
     return this
   }
@@ -141,10 +147,7 @@ export class Server {
     const next = async (err) => {
       // 내부 에러 처리
       if (err) {
-        if (err instanceof HttpException) {
-          return res.sendError(err, err.statusCode)
-        }
-
+        if (err instanceof HttpException) return res.sendError(err, err.statusCode)
         return res.sendError(new InternalServerErrorException(err.message), 500)
       }
 
@@ -170,9 +173,8 @@ export class Server {
 
         // 라우팅 처리
         if (route.method === req.method) {
-          // 패스 매칭
           const handler = route.path.exec(url)
-
+          // 라우트 존재
           if (handler) {
             // req 쿼리스트링
             /** @returns {{[query: string]: string}} */
@@ -181,10 +183,28 @@ export class Server {
             // req 파라미터
             req.params = handler.pathname?.groups || {}
 
-            const result = route.handler(req, res)
-            if (result instanceof Promise) {
-              await result
+            // 라우트용 미들웨어 처리
+            if (route.middleware) {
+              let middlewareIdx = 0
+
+              const middlewareNext = async () => {
+                try {
+                  const middleware = route.middleware[middlewareIdx++]
+                  if(!middleware) return
+                  const middlewareResult = middleware(req, res, middlewareNext)
+                  if (middleware instanceof Promise) await middlewareResult
+                } catch (err) {
+                  if (err instanceof HttpException) throw err
+                  throw new InternalServerErrorException(err.message)
+                }
+              }
+
+              middlewareNext()
             }
+
+            // 핸들러 처리
+            const result = route.handler(req, res)
+            if (result instanceof Promise) await result
             return
           }
         }
