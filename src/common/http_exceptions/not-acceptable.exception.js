@@ -1,7 +1,7 @@
 import HttpException from './http.exception.js'
 
 export default class NotAcceptableException extends HttpException {
-  constructor(message = '', error = '허용되지 않음') {
+  constructor(message = '허용되지 않음', error = 'not_acceptable') {
     super(406, message, error)
   }
 }
