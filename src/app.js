@@ -1,8 +1,15 @@
-import { Router } from './common/server/router.js';
+import { Router } from './common/server/router.js'
 import { Server } from './common/server/server.js'
 
 const server = new Server()
 const testRouter = new Router()
+
+server.use('*', (req, res, next) => {
+  if (!req.readableEnded) req.resume()
+  next()
+})
+
+const bodyParser = (req, res, next) => {}
 
 const testMiddleware = (req, res, next) => {
   console.log('미들웨어 진입')
