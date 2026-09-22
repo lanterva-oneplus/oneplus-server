@@ -4,6 +4,7 @@ import { Router } from './router.js'
 import HttpException from '../http_exceptions/http.exception.js'
 import InternalServerErrorException from '../http_exceptions/internal-server-error.exception.js'
 import NotFoundException from '../http_exceptions/not-found.exception.js'
+import PayloadTooLargeException from '../http_exceptions/payload_too_large.exception.js'
 
 export class Server {
   /**
@@ -20,6 +21,8 @@ export class Server {
    * }[]}
    */
   routes = []
+
+  maxContentLength = 10 // 1028 * 1028 * 10
 
   /**
    * @param { string } path
@@ -125,7 +128,7 @@ export class Server {
     res['sendError'] = (httpError, status = 500) => {
       return res.json(
         {
-          status: status,
+          status: httpError.statusCode || status,
           success: false,
           message: httpError.message,
           error: httpError.error,
@@ -183,6 +186,23 @@ export class Server {
             // req 파라미터
             req.params = handler.pathname?.groups || {}
 
+            // body 요청 처리
+            const contentLength = parseInt(req.headers['content-length'])
+            if (contentLength > this.maxContentLength) return res.sendError(new PayloadTooLargeException())
+
+            if (req.headers['transfer-encoding'] === 'chunked') {
+              req.setTimeout(3000)
+              let received = 0
+
+              req.on('data', (chunk) => {
+                received += chunk.length
+                if (received > this.maxContentLength) {
+                  req.destroy()
+                  return res.sendError(new PayloadTooLargeException())
+                }
+              })
+            }
+
             // 라우트용 미들웨어 처리
             if (route.middleware) {
               let middlewareIdx = 0
@@ -190,7 +210,7 @@ export class Server {
               const middlewareNext = async () => {
                 try {
                   const middleware = route.middleware[middlewareIdx++]
-                  if(!middleware) return
+                  if (!middleware) return
                   const middlewareResult = middleware(req, res, middlewareNext)
                   if (middleware instanceof Promise) await middlewareResult
                 } catch (err) {
@@ -223,7 +243,7 @@ export class Server {
    * @param { number } port
    */
   listen(port = 3000) {
-    https
+    const server = https
       .createServer(
         { key: fs.readFileSync(process.env.HTTPS_CA_KEY), cert: fs.readFileSync(process.env.HTTPS_CA) },
         (req, res) => {
@@ -234,5 +254,14 @@ export class Server {
       .listen(port, () => {
         console.log('Start Server')
       })
+
+    server.headersTimeout = 5000
+    server.requestTimeout = 10000
+    server.keepAliveTimeout = 5000
+    server.maxHeadersCount = 100
+    server.maxConnections = 1000
+
+    // req.socket.connectTime으로 연결 시작 시간 체크
+    server.on('connection', (socket) => (socket.connectTime = Date.now()))
   }
 }
