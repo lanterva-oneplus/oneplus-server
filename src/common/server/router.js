@@ -15,6 +15,26 @@ export class Router {
   routes = []
 
   /**
+   * @type {{
+   * path: URLPattern,
+   * handler: Middlewares[]
+   * }}
+   */
+  middlewares = []
+
+  /**
+   * @param { string } path
+   * @param { Middleware } handler
+   */
+  use(path, handler) {
+    this.middlewares.push({
+      path: new URLPattern({ pathname: path }),
+      middleware: handler,
+    })
+    return this
+  }
+
+  /**
    * @param { string } path
    * @param { Middleware[] } middleware
    * @param { Handler } handler
