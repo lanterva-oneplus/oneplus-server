@@ -3,6 +3,12 @@
  * @param { http.ServerResponse } res
  */
 const setContext = (req, res) => {
+  /**
+   * req 쿼리스트링
+   * @returns {{[query: string]: string}}
+   */
+  req.query = Object.fromEntries(new URLSearchParams(req.url.split('?')[1])) || {}
+
   // response 콘텍스트
   res['json'] = (data, status = 200) => {
     res.setHeader('Content-Type', 'application/json')
