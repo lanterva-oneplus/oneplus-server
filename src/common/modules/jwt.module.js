@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 
 /**
- * @typedef {object} JWTOption
+ * @typedef {Record<string, string>} JWTOption
  * @property {string} [iss] - 발급자
  * @property {string} [sub] - 사용자 id
  * @property {string} [aud] - 토큰을 사용할 서비스
@@ -12,7 +12,7 @@ import crypto from 'crypto'
  */
 
 /**
- * @param {object} payload
+ * @param {Record<string, string>} payload
  * @param {string} secret
  * @param {JWTOption} [option]
  */
@@ -23,7 +23,7 @@ export const sign = (payload, secret, option) => {
   }
 
   if (typeof payload !== 'object') throw new Error('페이로드는 object 타입이여야 합니다.')
-  Object.keys(option).forEach((key) => (payload[key] = option[key]))
+  if (option) Object.keys(option).forEach((key) => (payload[key] = option[key]))
 
   const encodedHeader = encodeBase64(header)
   const encodedPayload = encodeBase64(payload)
@@ -34,7 +34,7 @@ export const sign = (payload, secret, option) => {
 
 /**
  * @param {string} jwt
- * @returns {object}
+ * @returns {string}
  */
 export const decode = (jwt) => {
   const [header, payload, signature] = jwt.split('.')
@@ -44,7 +44,7 @@ export const decode = (jwt) => {
 /**
  * @param {string} jwt
  * @param {string} secret
- * @returns {object | false}
+ * @returns {string | false}
  */
 export const verify = (jwt, secret) => {
   const [header, payload, signature] = jwt.split('.')
