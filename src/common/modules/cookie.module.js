@@ -1,5 +1,9 @@
 /**
- * @typedef {object} CookieOptions
+ * @import {req, res} from '../server/types/server.types.js'
+ */
+
+/**
+ * @typedef {Record<string, string>} CookieOptions
  * @property {string} [path] - 쿠키 경로
  * @property {string} [domain] - 쿠키 도메인
  * @property {number} [maxAge] - 쿠키 유효 기간 (초 단위)
@@ -11,7 +15,7 @@
 
 /**
  *
- * @param { http.ServerResponse } res
+ * @param { res } res
  * @param { string } name
  * @param { string } value
  * @param { CookieOptions } [option]
@@ -22,6 +26,9 @@ export const setCookie = (res, name, value, option) => {
   const encodedValue = encodeURIComponent(value)
   let cookie = `${encodedName}=${encodedValue}`
 
+  /**
+   * @type {Record<string, string>}
+   */
   const mappingKeys = {
     path: 'Path',
     domain: 'Domain',
@@ -33,33 +40,34 @@ export const setCookie = (res, name, value, option) => {
   }
 
   if (option) Object.keys(option).forEach((key) => (cookie += `; ${mappingKeys[key]}=${option[key]}`))
-
   const existsCookies = res.getHeader('Set-Cookie')
-  if (existsCookies) res.setHeader('Set-Cookie', [...existsCookies, cookie])
-  else res.setHeader('Set-Cookie', [cookie])
+  if (existsCookies) {
+    if (!(typeof existsCookies === 'number')) {
+      res.setHeader('Set-Cookie', [...existsCookies, cookie])
+    }
+  } else res.setHeader('Set-Cookie', [cookie])
 }
 
 /**
  *
- * @param { http.IncomingMessage } req
+ * @param { req } req
  * @param { string } name
- * @returns { {name: string, value: string} | false }
+ * @returns { string | false }
  */
 export const getCookie = (req, name) => {
-  /** @type {string[]} */
-  const cookies = req.headers['cookie'].split('; ')
+  /** @type {string[] | undefined} */
+  const cookies = req.headers['cookie']?.split('; ')
   if (!cookies) return false
 
   const encodedName = encodeURIComponent(name)
   const cookie = cookies.find((cookie) => cookie.split('=')[0] === encodedName)
-  const [cookieName, cookieValue] = cookie.split('=')
-  return { name: decodeURIComponent(cookieName), value: decodeURIComponent(cookieValue) }
+  if (!cookie) return false
+  const [_, cookieValue] = cookie.split('=')
+  return decodeURIComponent(cookieValue)
 }
 
 /**
- *
- * @param { http.ServerResponse } req
- * @param { http.IncomingMessage } res
+ * @param { res } res
  * @param { string } name
  * @returns { void | false }
  */
