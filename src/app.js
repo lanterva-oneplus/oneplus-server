@@ -1,4 +1,4 @@
-import authRouter from './auth/auth.controller.js'
+import bodyParser from './common/middleware/body-parser.middleware.js';
 import { Router } from './common/server/router.js'
 import { Server } from './common/server/server.js'
 
@@ -14,12 +14,19 @@ testRouter.get('/q', (req, res) => {
   res.json(q)
 })
 
-testRouter.get('/p/:id', (req, res) => {
-  const p = req.params
-  console.log(p)
-  res.json(p)
+const tt = (req, res, next) => {
+  next()
+}
+
+testRouter.post('/', [bodyParser], (req, res) => {
+  console.log(req.body)
+  res.text('dd')
 })
 
-server.router('/t', testRouter)
+testRouter.get('/t', [tt], (req, res) => {
+  res.text('야르2')
+})
+
+server.router('', testRouter)
 
 server.listen(3000)

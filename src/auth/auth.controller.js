@@ -9,7 +9,6 @@ authRouter.get('', async (req, res) => {
   return await authEntry(req, res)
 })
 
-// url은 제대로 옴.
 authRouter.get('/callback', async (req, res) => {
   return await authCallback(req, res)
 })

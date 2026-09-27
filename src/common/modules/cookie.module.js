@@ -43,7 +43,7 @@ export const setCookie = (res, name, value, option) => {
  *
  * @param { http.IncomingMessage } req
  * @param { string } name
- * @returns { {name: string, value: string} | false }
+ * @returns { string | false }
  */
 export const getCookie = (req, name) => {
   /** @type {string[]} */
@@ -52,8 +52,8 @@ export const getCookie = (req, name) => {
 
   const encodedName = encodeURIComponent(name)
   const cookie = cookies.find((cookie) => cookie.split('=')[0] === encodedName)
-  const [cookieName, cookieValue] = cookie.split('=')
-  return { name: decodeURIComponent(cookieName), value: decodeURIComponent(cookieValue) }
+  const [_, cookieValue] = cookie.split('=')
+  return decodeURIComponent(cookieValue)
 }
 
 /**
