@@ -20,6 +20,7 @@ export class Server {
    */
   routes = []
 
+
   /** 
    * @type {{
    * path: URLPattern,
