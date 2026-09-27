@@ -1,13 +1,15 @@
 /**
- * @param { http.IncomingMessage } req
- * @param { http.ServerResponse } res
+ * @import {Middleware, Handler, Routes, Middlewares} from './types/server.types.js'
+ * @import {req, res, RedirectOption} from './types/context.types.js'
+ * @import HttpException from '../http_exceptions/http.exception.js'
+ */
+
+/**
+ * @param {req} req
+ * @param {res} res
  */
 const setContext = (req, res) => {
-  /**
-   * req 쿼리스트링
-   * @returns {{[query: string]: string}}
-   */
-  req.query = Object.fromEntries(new URLSearchParams(req.url.split('?')[1])) || {}
+  req['query'] = Object.fromEntries(new URLSearchParams(req.url?.split('?')[1])) || {}
 
   // response 콘텍스트
   res['json'] = (data, status = 200) => {
@@ -16,10 +18,6 @@ const setContext = (req, res) => {
     res.end(JSON.stringify(data))
   }
 
-  /**
-   * @param {string} data
-   * @param {number} status
-   */
   res['text'] = (data, status = 200) => {
     if (typeof data !== 'string') throw new Error('string 타입만 허용합니다.')
     res.setHeader('Content-Type', 'text/plain; charset=utf-8')
@@ -28,18 +26,7 @@ const setContext = (req, res) => {
     res.end(String(data))
   }
 
-  /**
-   * @typedef {object} RedirectOption
-   * @property {301 | 302 | 307} statusCode
-   * @property {boolean} [cache]
-   * @property {number} [maxAge]
-   */
-
-  /**
-   * @param { string } path
-   * @param {RedirectOption} option
-   */
-  res['redirect'] = (path, option = {}) => {
+  res['redirect'] = (path, option = { statusCode: 302, cache: false, maxAge: 0 }) => {
     res.setHeader('Location', path)
 
     if (option.cache) {
@@ -53,11 +40,6 @@ const setContext = (req, res) => {
     res.end()
   }
 
-  /**
-   * @param {object} data
-   * @param {string} message
-   * @param {number} status
-   */
   res['sendSuccess'] = (data, message, status = 200) => {
     return res.json(
       {
@@ -70,10 +52,6 @@ const setContext = (req, res) => {
     )
   }
 
-  /**
-   * @param {HttpException} httpError
-   * @param {number} status
-   */
   res['sendError'] = (httpError) => {
     return res.json(
       {
