@@ -1,35 +1,20 @@
+/** @import {req, res, Middleware, Handler, Routes, Middlewares} from './types/server.types.js' */
+
 export class Router {
-  /**
-   * @typedef {(req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void | Promise<void>} Middleware
-   * @typedef {(req: http.IncomingMessage, res: http.ServerResponse) => void | Promise<void>} Handler
-   */
-
-  /**
-   * @type {{
-   * method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE' | null,
-   * path: URLPattern,
-   * middleware: Middleware[]
-   * handler: Handler
-   * }[]}
-   */
+  /** @type {Routes[]} */
   routes = []
-
-  /**
-   * @type {{
-   * path: URLPattern,
-   * handler: Middlewares[]
-   * }}
-   */
+  
+  /** @type {Middlewares[]} */
   middlewares = []
 
   /**
    * @param { string } path
-   * @param { Middleware } handler
+   * @param { Middleware } middlewareHandler
    */
-  use(path, handler) {
+  use(path, middlewareHandler) {
     this.middlewares.push({
       path: new URLPattern({ pathname: path }),
-      middleware: handler,
+      handler: middlewareHandler,
     })
     return this
   }

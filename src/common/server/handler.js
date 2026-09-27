@@ -4,7 +4,12 @@ import NotFoundException from '../http_exceptions/not-found.exception.js'
 import PayloadTooLargeException from '../http_exceptions/payload_too_large.exception.js'
 
 /** 
- * @param { http.ServerResponse } res
+ * @import {Middleware, Handler, Routes, Middlewares} from './types/server.types.js'
+ * @import {req, res} from './types/context.types.js'
+ */
+
+/** 
+ * @param { res } res
  * @param { unknown } err 
  */
 const catchError = (res, err) => {
@@ -14,31 +19,21 @@ const catchError = (res, err) => {
 }
 
 /**
- * @typedef {(req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void | Promise<void>} Middleware
- * @typedef {(req: http.IncomingMessage, res: http.ServerResponse) => void | Promise<void>} Handler
- *
- * @param {{
- * method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
- * path: URLPattern,
- * middleware: Middleware[]
- * handler: Handler
- * }[]} routes
- *
- * @param {{
- * path: URLPattern,
- * handler: Middleware[]
- * }[]} middlewares
- *
- * @param { http.IncomingMessage } req
- * @param { http.ServerResponse } res
+ * 
+ * @param {Routes[]} routes 
+ * @param {Middlewares[]} middlewares 
+ * @param {req} req 
+ * @param {res} res 
+ * @returns 
  */
 const handler = (routes, middlewares, req, res) => {
+  //@ts-ignore
   const url = new URL(process.env.DEFAULT_PATH + req.url)
   const maxContentLength = 1028 * 1028 * 10 // 10mb
   let idx = 0
 
   // body 고용량 공격 방어로직
-  const contentLength = parseInt(req.headers['content-length'])
+  const contentLength = parseInt(req.headers['content-length'] || '')
   if (contentLength > maxContentLength) return res.sendError(new PayloadTooLargeException())
 
   if (req.headers['transfer-encoding'] === 'chunked') {
@@ -55,6 +50,7 @@ const handler = (routes, middlewares, req, res) => {
   }
 
   // 1. 전역 미들웨어
+  /** @param {unknown | HttpException} [err] */
   const middlewareNext = (err) => {
     if (err) return catchError(res, err)
 
@@ -77,6 +73,7 @@ const handler = (routes, middlewares, req, res) => {
   }
 
   // 2. 라우트 탐색 + 핸들러 실행
+  /** @param {unknown | HttpException} [err] */
   const routeHandlerNext = (err) => {
     if (err) return catchError(res, err)
 
@@ -107,6 +104,7 @@ const handler = (routes, middlewares, req, res) => {
 
     // 3. 라우트 전용 미들웨어
     let routeMiddlewareIdx = 0
+    /** @param {unknown | HttpException} [err] */
     const routeMiddlewareNext = (err) => {
       if (err) return catchError(res, err)
 

@@ -4,29 +4,13 @@ import { Router } from './router.js'
 import setContext from './context.js'
 import handler from './handler.js'
 
-export class Server {
-  /**
-   * @typedef {(req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void | Promise<void>} Middleware
-   * @typedef {(req: http.IncomingMessage, res: http.ServerResponse) => void | Promise<void>} Handler
-   */
+/** @import {req, res, Middleware, Handler, Routes, Middlewares} from './types/server.types.js' */
 
-  /**
-   * @type {{
-   * method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
-   * path: URLPattern,
-   * middleware: Middleware[]
-   * handler: Handler
-   * }[]}
-   */
+export class Server {
+  /** @type {Routes[]} */
   routes = []
 
-
-  /** 
-   * @type {{
-   * path: URLPattern,
-   * handler: Middlewares[]
-   * }}
-   */
+  /** @type {Middlewares[]} */
   middlewares = []
 
   /**
@@ -35,7 +19,6 @@ export class Server {
    */
   use(path, middleware) {
     this.middlewares.push({
-      method: null,
       path: new URLPattern({ pathname: path }),
       handler: middleware,
     })
@@ -60,21 +43,24 @@ export class Server {
     }
 
     for (const middleware of router.middlewares) {
-      middleware.path = new URLPattern({ pathname: `${path}${route.path.pathname}` })
+      middleware.path = new URLPattern({ pathname: `${path}${middleware.path.pathname}` })
       this.middlewares.push(middleware)
     }
   }
 
   /**
-   *
    * @param { number } port
    */
   listen(port = 3000) {
     const server = https
       .createServer(
+        //@ts-ignore
         { key: fs.readFileSync(process.env.HTTPS_CA_KEY), cert: fs.readFileSync(process.env.HTTPS_CA) },
+        //@ts-ignore
         (req, res) => {
+          //@ts-ignore
           setContext(req, res)
+          //@ts-ignore
           handler(this.routes, this.middlewares, req, res)
         },
       )
@@ -87,8 +73,5 @@ export class Server {
     server.keepAliveTimeout = 5000
     server.maxHeadersCount = 100
     server.maxConnections = 1000
-
-    // req.socket.connectTime으로 연결 시작 시간 체크
-    server.on('connection', (socket) => (socket.connectTime = Date.now()))
   }
 }
