@@ -1,8 +1,17 @@
 import { Pool } from 'pg'
 
+/**
+ * @returns {number}
+ */
+const getPort = () => {
+  const port = process.env.POSTGRES_PORT
+  if (port) return parseInt(port)
+  return 5432
+}
+
 const pool = new Pool({
   host: 'localhost',
-  port: process.env.POSTGRES_PORT || 5432,
+  port: getPort(),
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DB,
@@ -17,6 +26,7 @@ const checkConnection = async () => {
     console.log('connected pg')
     client.release()
   } catch (e) {
+    //@ts-ignore
     console.error('pg error: ', e.message)
     await pool.end()
     process.exit(1)
