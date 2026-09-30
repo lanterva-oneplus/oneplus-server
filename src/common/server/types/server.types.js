@@ -1,13 +1,17 @@
 import http from 'node:http'
 
 /**
+ * @import {req as cReq, res as cRes} from './context.types.js'
+ */
+
+/**
  * @typedef {http.IncomingMessage} req 요청
  * @typedef {http.ServerResponse} res 응답
  */
 
 /**
- * @typedef {(req: req, res: res, next: Function) => void | Promise<void>} Middleware 미들웨어 핸들러
- * @typedef {(req: req, res: res) => void | Promise<void>} Handler 라우트 핸들러
+ * @typedef {(req: cReq, res: cRes, next: Function) => void | Promise<void>} Middleware 미들웨어 핸들러
+ * @typedef {(req: cReq, res: cRes) => void | Promise<void>} Handler 라우트 핸들러
  */
 
 /**

@@ -1,6 +1,8 @@
+import HttpException from '../http_exceptions/http.exception.js'
+
 /**
  * @template T
- * @template E
+ * @template {HttpException | null} E
  */
 export default class Result {
   /**
@@ -16,21 +18,23 @@ export default class Result {
 
   /**
    * @template T
-   * @template E
+   * @template {HttpException | null} E
    * @param {T} data
-   * @returns {Result<T, null>}
+   * @returns {Result<T, E>}
    */
   static ok(data) {
+    /** @type {Result<T, E>} */
     return new Result(true, data, null)
   }
 
   /**
+   * @template {HttpException} E
    * @template T
-   * @template E
    * @param {E} error
-   * @returns {Result<null, E>}
+   * @returns {Result<T, E>}
    */
   static fail(error) {
+    /** @type {Result<T, E>} */
     return new Result(false, null, error)
   }
 }
