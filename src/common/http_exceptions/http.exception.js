@@ -1,6 +1,5 @@
 export default class HttpException extends Error {
   /**
-   * 
    * @param {number} statusCode 
    * @param {string} message 
    * @param {string} error 

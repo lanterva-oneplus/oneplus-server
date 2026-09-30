@@ -21,8 +21,8 @@
  * }} req
  *
  * @typedef {sRes & {
- * json: (data: any, status: number) => void
- * text: (data: string, status: number) => void
+ * json: (data: any, status?: number) => void
+ * text: (data: string, status?: number) => void
  * redirect: (path: string, option: RedirectOption) => void
  * sendSuccess: (data: any, message: string, status: number) => void
  * sendError: (httpException: HttpException) => void

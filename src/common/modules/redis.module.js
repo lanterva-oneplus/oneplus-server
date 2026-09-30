@@ -1,5 +1,5 @@
 import RedisPkg from 'ioredis'
-const Redis = RedisPkg.default ?? RedisPkg
+const Redisbase = RedisPkg.default ?? RedisPkg
 
 const getPort = () => {
   const port = process.env.REDIS_PORT
@@ -7,7 +7,7 @@ const getPort = () => {
   else 6379
 }
 
-const redis = new Redis({
+const Redis = new Redisbase({
   port: getPort(),
   host: '127.0.0.1',
   username: 'default',
@@ -15,4 +15,4 @@ const redis = new Redis({
   db: 0,
 })
 
-export default redis
+export default Redis

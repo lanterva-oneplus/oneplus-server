@@ -4,7 +4,9 @@ import { Router } from './router.js'
 import setContext from './context.js'
 import handler from './handler.js'
 
-/** @import {req, res, Middleware, Handler, Routes, Middlewares} from './types/server.types.js' */
+/**
+ * @import {Middleware, Handler, Routes, Middlewares} from './types/server.types.js'
+ */
 
 export class Server {
   /** @type {Routes[]} */
@@ -56,12 +58,9 @@ export class Server {
       .createServer(
         //@ts-ignore
         { key: fs.readFileSync(process.env.HTTPS_CA_KEY), cert: fs.readFileSync(process.env.HTTPS_CA) },
-        //@ts-ignore
         (req, res) => {
-          //@ts-ignore
-          setContext(req, res)
-          //@ts-ignore
-          handler(this.routes, this.middlewares, req, res)
+          const context = setContext(req, res)
+          handler(this.routes, this.middlewares, context.req, context.res)
         },
       )
       .listen(port, () => {
