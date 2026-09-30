@@ -61,10 +61,7 @@ export const getCookie = (req, name) => {
 
   const encodedName = encodeURIComponent(name)
   const cookie = cookies.find((cookie) => cookie.split('=')[0] === encodedName)
-<<<<<<< HEAD
-=======
   if (!cookie) return false
->>>>>>> develop
   const [_, cookieValue] = cookie.split('=')
   return decodeURIComponent(cookieValue)
 }
