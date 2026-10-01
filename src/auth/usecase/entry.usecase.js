@@ -13,7 +13,7 @@ import InternalServerErrorException from '../../common/http_exceptions/internal-
 /**
  * @typedef {object} EntryDependency
  * @property {Redis} redis
- * @property {OauthService} oauthService
+ * @property {OauthService} oAuthService
  *
  * @typedef {object} EntryCommand
  * @property {string} deviceId
@@ -23,7 +23,7 @@ import InternalServerErrorException from '../../common/http_exceptions/internal-
  * @returns {Promise<Result<EntryResponseDto, InternalServerErrorException>>}
  */
 const entryUsecase = async (dependency, command) => {
-  const oAuthService = dependency.oauthService
+  const oAuthService = dependency.oAuthService
 
   const state = oAuthService.generateState()
   const { codeVerifier, codeChallenge } = oAuthService.generateCodeSet()
@@ -45,7 +45,7 @@ const entryUsecase = async (dependency, command) => {
     )
   }
 
-  const authUrl = dependency.oauthService.generateAuthURL(state, codeChallenge)
+  const authUrl = oAuthService.generateAuthURL(state, codeChallenge)
   return Result.ok(new EntryResponseDto(authUrl))
 }
 
