@@ -1,9 +1,7 @@
 import { Redis } from 'ioredis'
 import Result from '../../common/modules/result.module.js'
 import EntryResponseDto from '../dto/entry.response.dto.js'
-import EntryRequestDto from '../dto/entry.request.dto.js'
-import OauthService from '../service/oauth.service.js'
-import { RedisError } from '../../common/modules/db.error.js'
+import OAuthService from '../service/oauth.service.js'
 import InternalServerErrorException from '../../common/http_exceptions/internal-server-error.exception.js'
 
 /**
@@ -13,7 +11,7 @@ import InternalServerErrorException from '../../common/http_exceptions/internal-
 /**
  * @typedef {object} EntryDependency
  * @property {Redis} redis
- * @property {OauthService} oAuthService
+ * @property {OAuthService} oAuthService
  *
  * @typedef {object} EntryCommand
  * @property {string} deviceId
