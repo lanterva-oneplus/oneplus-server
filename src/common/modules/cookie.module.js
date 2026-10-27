@@ -3,7 +3,7 @@
  */
 
 /**
- * @typedef {Record<string, string>} CookieOptions
+ * @typedef {Record<string, string | number | Date | boolean>} CookieOptions
  * @property {string} [path] - 쿠키 경로
  * @property {string} [domain] - 쿠키 도메인
  * @property {number} [maxAge] - 쿠키 유효 기간 (초 단위)
