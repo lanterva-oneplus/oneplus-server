@@ -1,7 +1,7 @@
 import crypto from 'crypto'
-import { TradeTokenError } from '../auth.error.js';
+import { TradeTokenError, UserInfoError } from './oauth.service.error.js'
 
-export default class OauthService {
+export default class OAuthService {
   /** @type {string} */
   //@ts-ignore
   #clientId = process.env.GOOGLE_CLIENT
@@ -52,6 +52,7 @@ export default class OauthService {
   /**
    * @param {string} code
    * @param {string} codeVerifier
+   * @returns {Promise<string>}
    */
   async tradeToken(code, codeVerifier) {
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -66,9 +67,41 @@ export default class OauthService {
       }),
     })
 
-    if(!tokenResponse.ok) throw new TradeTokenError()
-
     const tokenData = await tokenResponse.json()
-    
+
+    if (!tokenResponse.ok) {
+      console.error(tokenData)
+      throw new TradeTokenError()
+    }
+
+    return tokenData.access_token
+  }
+
+  /**
+   * @typedef {object} UserInfo
+   * @property {string} sub
+   * @property {string} name
+   * @property {string} email
+   * @property {boolean} email_verified
+   * @property {string} picture
+   * 
+   * @param {string} accessToken
+   * @returns {Promise<UserInfo>}
+   */
+  async getUserInfo(accessToken) {
+    const userResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+    const userData = await userResponse.json()
+
+    if (!userResponse.ok) {
+      console.error(userData)
+      throw new UserInfoError()
+    }
+
+    return userData
   }
 }
