@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 
 /**
- * @typedef {Record<string, string>} JWTOption
+ * @typedef {Record<string, string | Date>} JWTOption
  * @property {string} [iss] - 발급자
  * @property {string} [sub] - 사용자 id
  * @property {string} [aud] - 토큰을 사용할 서비스
@@ -23,11 +23,20 @@ export const sign = (payload, secret, option) => {
   }
 
   if (typeof payload !== 'object') throw new Error('페이로드는 object 타입이여야 합니다.')
-  if (option) Object.keys(option).forEach((key) => (payload[key] = option[key]))
+  if (option)
+    Object.keys(option).forEach((key) => {
+      payload[key] =
+        option[key] instanceof Date ?
+          Math.floor(option[key].getTime() / 1000).toString()
+        : option[key]
+    })
 
   const encodedHeader = encodeBase64(header)
   const encodedPayload = encodeBase64(payload)
-  const signature = crypto.createHmac('sha256', secret).update(`${encodedHeader}.${encodedPayload}`).digest('hex')
+  const signature = crypto
+    .createHmac('sha256', secret)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest('hex')
 
   return `${encodedHeader}.${encodedPayload}.${signature}`
 }
@@ -44,13 +53,31 @@ export const decode = (jwt) => {
 /**
  * @param {string} jwt
  * @param {string} secret
- * @returns {string | false}
+ * @returns {Record<string, string> | false}
  */
 export const verify = (jwt, secret) => {
   const [header, payload, signature] = jwt.split('.')
-  const serverSignature = crypto.createHmac('sha256', secret).update(`${header}.${payload}`).digest('hex')
-  if (!crypto.timingSafeEqual(Buffer.from(signature, 'base64'), Buffer.from(serverSignature, 'base64'))) return false
-  return Buffer.from(payload, 'base64').toString('utf-8')
+  const serverSignature = crypto
+    .createHmac('sha256', secret)
+    .update(`${header}.${payload}`)
+    .digest('hex')
+
+  const isEqualSignature = !crypto.timingSafeEqual(
+    Buffer.from(signature, 'base64'),
+    Buffer.from(serverSignature, 'base64'),
+  )
+
+  if (isEqualSignature) {
+    return false
+  }
+
+  const decodedPayload = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'))
+  
+  const now = Math.floor(Date.now() / 1000)
+  if (decodedPayload.nbf && decodedPayload.nbf > now) return false
+  if (decodedPayload.exp && decodedPayload.exp < now) return false
+
+  return decodedPayload
 }
 
 /**
