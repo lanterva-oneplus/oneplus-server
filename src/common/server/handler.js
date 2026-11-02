@@ -80,8 +80,8 @@ const handler = (routes, middlewares, req, res) => {
     const routeHandler = routes[idx++]
     if (!routeHandler) return catchError(res, new NotFoundException())
 
-    if (!routeHandler.path.exec(url)) {
-      // 경로가 안 맞으면 다음 라우트 탐색
+    if (routeHandler.method !== req.method || !routeHandler.path.exec(url)) {
+      // 메서드나 경로가 안 맞으면 다음 라우트 탐색
       return routeHandlerNext()
     }
 
