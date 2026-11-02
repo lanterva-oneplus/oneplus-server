@@ -1,14 +1,16 @@
 import BadRequestException from '../common/http_exceptions/bad-request.exception.js'
 import * as jwt from '../common/modules/jwt.module.js'
-import { setCookie } from '../common/modules/cookie.module.js'
+import { getCookie, setCookie } from '../common/modules/cookie.module.js'
 import pool from '../common/modules/postgresql.module.js'
 import redis from '../common/modules/redis.module.js'
 import { Router } from '../common/server/router.js'
 import CallbackRequestDto from './dto/callback.request.dto.js'
 import EntryRequestDto from './dto/entry.request.dto.js'
+import RefreshRequestDto from './dto/refresh.request.dto.js'
 import OAuthService from './service/oauth.service.js'
 import callbackUsecase from './usecase/callback.usecase.js'
 import entryUsecase from './usecase/entry.usecase.js'
+import refreshUsecase from './usecase/refresh.usecase.js'
 
 const authRouter = new Router()
 
@@ -82,7 +84,41 @@ authRouter.get('/callback', [], async (req, res) => {
   return res.sendSuccess(null, '로그인에 성공했습니다.', 200)
 })
 
-authRouter.get('/refresh', [], async (req, res) => {})
+authRouter.post('/refresh', [], async (req, res) => {
+  /** @type {string} */
+  //@ts-ignore
+  const refreshCookieName = process.env.REFRESH_COOKIE_NAME
+  /** @type {string} */
+  //@ts-ignore
+  const accessCookieName = process.env.ACCESS_COOKIE_NAME
+
+  const refreshToken = getCookie(req, refreshCookieName)
+  const deviceIdHeader = req.headers['x-device-id']
+
+  const refreshRequestDto = new RefreshRequestDto(refreshToken, deviceIdHeader)
+  if (!refreshRequestDto.isValid()) {
+    return res.sendError(new BadRequestException('요청값이 올바르지 않습니다.'))
+  }
+
+  const result = await refreshUsecase(
+    { redis: redis, jwt: jwt },
+    refreshRequestDto.toObject(),
+  )
+
+  if (result.error) return res.sendError(result.error)
+
+  const tokens = /** @type {{accessToken: string}} */ (result.data?.toObject())
+
+  setCookie(res, accessCookieName, tokens.accessToken, {
+    path: '/',
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Strict',
+    maxAge: 60 * 30,
+  })
+
+  return res.sendSuccess(null, '토큰 갱신에 성공했습니다.', 200)
+})
 
 authRouter.post('/logout', [], (req, res) => {})
 
