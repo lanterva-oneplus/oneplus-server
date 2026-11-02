@@ -6,10 +6,12 @@ import redis from '../common/modules/redis.module.js'
 import { Router } from '../common/server/router.js'
 import CallbackRequestDto from './dto/callback.request.dto.js'
 import EntryRequestDto from './dto/entry.request.dto.js'
+import LogoutRequestDto from './dto/logout.request.dto.js'
 import RefreshRequestDto from './dto/refresh.request.dto.js'
 import OAuthService from './service/oauth.service.js'
 import callbackUsecase from './usecase/callback.usecase.js'
 import entryUsecase from './usecase/entry.usecase.js'
+import logoutUsecase from './usecase/logout.usecase.js'
 import refreshUsecase from './usecase/refresh.usecase.js'
 
 const authRouter = new Router()
@@ -120,7 +122,41 @@ authRouter.post('/refresh', [], async (req, res) => {
   return res.sendSuccess(null, '토큰 갱신에 성공했습니다.', 200)
 })
 
-authRouter.post('/logout', [], (req, res) => {})
+authRouter.post('/logout', [], async (req, res) => {
+  /** @type {string} */
+  //@ts-ignore
+  const refreshCookieName = process.env.REFRESH_COOKIE_NAME
+  /** @type {string} */
+  //@ts-ignore
+  const accessCookieName = process.env.ACCESS_COOKIE_NAME
+
+  const refreshToken = getCookie(req, refreshCookieName)
+  const deviceIdHeader = req.headers['x-device-id']
+
+  const logoutRequestDto = new LogoutRequestDto(refreshToken, deviceIdHeader)
+  if (!logoutRequestDto.isValid()) {
+    return res.sendError(new BadRequestException('요청값이 올바르지 않습니다.'))
+  }
+
+  const result = await logoutUsecase(
+    { redis: redis, jwt: jwt },
+    logoutRequestDto.toObject(),
+  )
+
+  if (result.error) return res.sendError(result.error)
+
+  for (const name of [accessCookieName, refreshCookieName]) {
+    setCookie(res, name, '', {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Strict',
+      maxAge: 0,
+    })
+  }
+
+  return res.sendSuccess(null, '로그아웃에 성공했습니다.', 200)
+})
 
 authRouter.get('/me', [], (req, res) => {})
 
