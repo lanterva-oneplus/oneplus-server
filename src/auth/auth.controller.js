@@ -7,11 +7,13 @@ import { Router } from '../common/server/router.js'
 import CallbackRequestDto from './dto/callback.request.dto.js'
 import EntryRequestDto from './dto/entry.request.dto.js'
 import LogoutRequestDto from './dto/logout.request.dto.js'
+import MeRequestDto from './dto/me.request.dto.js'
 import RefreshRequestDto from './dto/refresh.request.dto.js'
 import OAuthService from './service/oauth.service.js'
 import callbackUsecase from './usecase/callback.usecase.js'
 import entryUsecase from './usecase/entry.usecase.js'
 import logoutUsecase from './usecase/logout.usecase.js'
+import meUsecase from './usecase/me.usecase.js'
 import refreshUsecase from './usecase/refresh.usecase.js'
 
 const authRouter = new Router()
@@ -158,6 +160,23 @@ authRouter.post('/logout', [], async (req, res) => {
   return res.sendSuccess(null, '로그아웃에 성공했습니다.', 200)
 })
 
-authRouter.get('/me', [], (req, res) => {})
+authRouter.get('/me', [], async (req, res) => {
+  /** @type {string} */
+  //@ts-ignore
+  const accessCookieName = process.env.ACCESS_COOKIE_NAME
+
+  const accessToken = getCookie(req, accessCookieName)
+
+  const meRequestDto = new MeRequestDto(accessToken)
+  if (!meRequestDto.isValid()) {
+    return res.sendError(new BadRequestException('요청값이 올바르지 않습니다.'))
+  }
+
+  const result = await meUsecase({ pool: pool, jwt: jwt }, meRequestDto.toObject())
+
+  if (result.error) return res.sendError(result.error)
+
+  return res.sendSuccess(result.data?.toObject(), '사용자 정보 조회에 성공했습니다.', 200)
+})
 
 export default authRouter
