@@ -59,7 +59,7 @@ const logoutUsecase = async (dependency, command) => {
   if (!session || !session.uid) return Result.ok(null)
 
   // 유효한 토큰이지만 다른 사용자/디바이스의 세션이면 삭제하지 않는다
-  if (session.uid !== String(payload.sub) || session.did !== command.deviceId) {
+  if (session.uid !== payload.sub || session.did !== command.deviceId) {
     console.error('세션 사용자/디바이스 불일치')
     return Result.fail(new UnauthorizedException('권한이 없습니다.', 'invalid_logout_error'))
   }
