@@ -1,25 +1,28 @@
-import http from 'node:http'
+import https from 'node:https'
+import fs from 'fs'
 import { Router } from './router.js'
+import setContext from './context.js'
+import handler from './handler.js'
+
+/**
+ * @import {Middleware, Handler, Routes, Middlewares} from './types/server.types.js'
+ */
 
 export class Server {
-  /**
-   * @type {{
-   * method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE' | null,
-   * path: URLPattern,
-   * handler: (req: http.IncomingMessage, res: http.ServerResponse) => any
-   * }[]}
-   */
+  /** @type {Routes[]} */
   routes = []
+
+  /** @type {Middlewares[]} */
+  middlewares = []
 
   /**
    * @param { string } path
-   * @param { (req: http.IncomingMessage, res: http.ServerResponse) => any } callback
+   * @param { Middleware } middleware
    */
-  use(path, callback) {
-    this.routes.push({
-      method: null,
+  use(path, middleware) {
+    this.middlewares.push({
       path: new URLPattern({ pathname: path }),
-      handler: callback,
+      handler: middleware,
     })
     return this
   }
@@ -32,98 +35,42 @@ export class Server {
   router(path = '', router) {
     if (path === '') {
       this.routes.push(...router.routes)
+      this.middlewares.push(...router.middlewares)
       return
     }
 
     for (const route of router.routes) {
-      const newPathName = new URLPattern({ pathname: `${path}${route.path.pathname}` })
-      route.path = newPathName
+      route.path = new URLPattern({ pathname: `${path}${route.path.pathname}` })
       this.routes.push(route)
     }
-  }
 
-  /**
-   * @param { http.IncomingMessage } req
-   * @param { http.ServerResponse } res
-   */
-  #setContext(req, res) {
-    res['json'] = (data) => {
-      res.setHeader('Content-Type', 'application/json')
-      res.end(JSON.stringify(data))
-    }
-
-    /** @param {string} data */
-    res['text'] = (data) => {
-      if (typeof data !== 'string') throw new Error('string 타입만 허용합니다.')
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8')
-      res.setHeader('Content-Length', Buffer.byteLength(data, 'utf-8'))
-      res.statusCode = 200
-      res.end(String(data))
-    }
-
-    res['redirect'] = (path) => {
-      res.setHeader('Location', path)
-      res.statusCode = 301
-      res.end()
+    for (const middleware of router.middlewares) {
+      middleware.path = new URLPattern({ pathname: `${path}${middleware.path.pathname}` })
+      this.middlewares.push(middleware)
     }
   }
 
   /**
-   * @param { http.IncomingMessage } req
-   * @param { http.ServerResponse } res
-   */
-  #handle(req, res) {
-    const url = new URL(`http://localhost:3000${req.url}`)
-    let idx = 0
-
-    const next = (err) => {
-      if (err) {
-        res.statusCode = 500
-        res.json({ message: err })
-        return
-      }
-
-      const route = this.routes[idx++]
-      if (!route) {
-        res.statusCode = 404
-        res.json({ message: 'not found' })
-        return
-      }
-
-      if (route.method === null) {
-        const handler = route.path.exec(url)
-        if (handler) {
-          req.params = handler.pathname.groups
-          return route.handler(req, res, next)
-        }
-      }
-
-      if (route.method === req.method) {
-        const handler = route.path.exec(url)
-        if (handler) {
-          req.params = handler.pathname.groups
-          return route.handler(req, res)
-        }
-      }
-
-      next()
-    }
-
-    next()
-  }
-
-  /**
-   *
    * @param { number } port
    */
   listen(port = 3000) {
-    http
-      .createServer((req, res) => {
-        this.#setContext(req, res)
-        this.#handle(req, res)
-      })
+    const server = https
+      .createServer(
+        //@ts-ignore
+        { key: fs.readFileSync(process.env.HTTPS_CA_KEY), cert: fs.readFileSync(process.env.HTTPS_CA) },
+        (req, res) => {
+          const context = setContext(req, res)
+          handler(this.routes, this.middlewares, context.req, context.res)
+        },
+      )
       .listen(port, () => {
-        console.log('Start Server')
+        console.log(`서버 시작됨`)
       })
+
+    server.headersTimeout = 5000
+    server.requestTimeout = 10000
+    server.keepAliveTimeout = 5000
+    server.maxHeadersCount = 100
+    server.maxConnections = 1000
   }
 }

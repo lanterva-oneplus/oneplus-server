@@ -6,12 +6,24 @@
     "node": "24.x"
   },
   "scripts": {
-    "start": "node ./src/app.js",
-    "dev": "node --watch ./src/app.js"
+    "start": "node --env-file=.env ./src/app.js",
+    "dev": "node --env-file=.env --watch ./src/app.js",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "test": "node --test"
   },
   "description": "",
   "main": "app.js",
   "keywords": [],
   "author": "",
-  "license": "none"
+  "license": "none",
+  "dependencies": {
+    "@audio/mir-drums": "^1.1.6",
+    "ioredis": "^6.0.0",
+    "node-web-audio-api": "^2.2.0",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3"
+  }
 }
