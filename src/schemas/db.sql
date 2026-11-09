@@ -19,8 +19,10 @@ ADD COLUMN IF NOT EXISTS status user_status;
 CREATE TABLE
   IF NOT EXISTS tracks (
     id bigserial PRIMARY KEY,
+    artist varchar(64),
+    image_path varchar(1028),
     track_name varchar(64) NOT NULL,
-    length_sec smallint NOT NULL CHECK (length_sec >= 0),
+    length_sec smallint,
     track_path varchar(1028) NOT NULL,
     added_date date DEFAULT CURRENT_DATE
   );
