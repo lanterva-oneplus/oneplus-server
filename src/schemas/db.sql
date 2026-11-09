@@ -1,19 +1,20 @@
--- 1. 사용자 정보 테이블
+-- 1. 사용자 상태 enum 생성
+CREATE TYPE user_status AS enum ('active', 'inactive', 'banned', 'deleted');
+
+-- 1-2. 사용자 권한 enum 생성
+CREATE TYPE user_role AS enum ('user', 'admin');
+
+-- 1-3. 사용자 정보 테이블
 CREATE TABLE
   IF NOT EXISTS users (
     id bigserial PRIMARY KEY,
     sub varchar(255) NOT NULL UNIQUE,
     email varchar(254) NOT NULL,
     nickname varchar(32) NOT NULL,
-    profile varchar(2048) NOT NULL
+    profile varchar(2048) NOT NULL,
+    status user_status,
+    role user_role NOT NULL DEFAULT 'user'
   );
-
--- 1-2. 사용자 상태 enum 생성
-CREATE TYPE user_status AS enum ('active', 'inactive', 'banned', 'deleted');
-
--- 1-3. 컬럼추가
-ALTER TABLE users
-ADD COLUMN IF NOT EXISTS status user_status;
 
 -- 2. 트랙 정보 테이블
 CREATE TABLE

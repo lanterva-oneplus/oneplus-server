@@ -8,11 +8,15 @@ const server = new Server()
 
 // cors
 server.use('*', (req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  const origin = req.headers.origin
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Access-Control-Allow-Credentials', 'true')
+    res.setHeader('Vary', 'Origin')
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 
-  // preflight는 여기서 종료
   if (req.method === 'OPTIONS') {
     res.statusCode = 204
     res.end()

@@ -8,12 +8,14 @@ export default class MeResponseDto {
    * @param {string} email
    * @param {string} nickname
    * @param {string} profile
+   * @param {'user' | 'admin'} role
    */
-  constructor(id, email, nickname, profile) {
+  constructor(id, email, nickname, profile, role) {
     this.id = id
     this.email = email
     this.nickname = nickname
     this.profile = profile
+    this.role = role
   }
 
   isValid() {
@@ -21,7 +23,7 @@ export default class MeResponseDto {
   }
 
   /**
-   * @returns {{id: string, email: string, nickname: string, profile: string}}
+   * @returns {{id: string, email: string, nickname: string, profile: string, role: 'user' | 'admin'}}
    */
   toObject() {
     return {
@@ -29,6 +31,7 @@ export default class MeResponseDto {
       email: this.email,
       nickname: this.nickname,
       profile: this.profile,
+      role: this.role,
     }
   }
 }

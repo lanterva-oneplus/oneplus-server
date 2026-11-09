@@ -18,7 +18,7 @@
  * @typedef {sReq & {
  * query: Record<string, string>
  * params: Record<string, string | undefined>
- * user?: {id: string, email: string, nickname: string, profile: string | null}
+ * user?: {id: string, email: string, nickname: string, profile: string | null, role: 'user' | 'admin'}
  * }} req
  *
  * @typedef {sRes & {
