@@ -1,3 +1,4 @@
+import ForbiddenException from '../http_exceptions/forbidden.exception.js'
 import UnauthorizedException from '../http_exceptions/unauthorized.exception.js'
 import meUsecase from '../../auth/usecase/me.usecase.js'
 import { getCookie } from '../modules/cookie.module.js'
