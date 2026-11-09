@@ -1,3 +1,4 @@
+import authMiddleware from '../common/middleware/auth.middleware.js'
 import BadRequestException from '../common/http_exceptions/bad-request.exception.js'
 import { parseMultipart } from '../common/modules/multipart.module.js'
 import pool from '../common/modules/postgresql.module.js'
@@ -19,7 +20,7 @@ import uploadUsecase from './usecase/upload.usecase.js'
 const trackRouter = new Router()
 
 // multipart/form-data
-trackRouter.post('', [], async (req, res) => {
+trackRouter.post('', [authMiddleware], async (req, res) => {
   /** @type {FormData} */
   let form
   try {
@@ -86,7 +87,7 @@ trackRouter.get('/:id', [], async (req, res) => {
   return res.sendSuccess(result.data?.toObject(), '트랙 로드에 성공했습니다.', 200)
 })
 
-trackRouter.delete('/:id', [], async (req, res) => {
+trackRouter.delete('/:id', [authMiddleware], async (req, res) => {
   const deleteRequestDto = new DeleteRequestDto(req.params.id)
   if (!deleteRequestDto.isValid()) {
     return res.sendError(
@@ -105,7 +106,7 @@ trackRouter.delete('/:id', [], async (req, res) => {
 })
 
 // multipart/form-data: title, image 중 최소 하나 (그 외 필드는 무시)
-trackRouter.patch('/:id', [], async (req, res) => {
+trackRouter.patch('/:id', [authMiddleware], async (req, res) => {
   // body는 첫 await 전에 소비해야 하므로 파싱을 먼저 시작
   const formPromise = parseMultipart(req)
 
