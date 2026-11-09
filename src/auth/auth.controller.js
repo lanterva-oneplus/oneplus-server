@@ -73,7 +73,7 @@ authRouter.get('/callback', [], async (req, res) => {
     path: '/',
     httpOnly: true,
     secure: true,
-    sameSite: 'Strict',
+    sameSite: 'None',
     maxAge: 60 * 30,
   })
 
@@ -81,7 +81,7 @@ authRouter.get('/callback', [], async (req, res) => {
     path: '/',
     httpOnly: true,
     secure: true,
-    sameSite: 'Strict',
+    sameSite: 'None',
     maxAge: 60 * 60 * 24 * 14,
   })
 
@@ -117,7 +117,7 @@ authRouter.post('/refresh', [], async (req, res) => {
     path: '/',
     httpOnly: true,
     secure: true,
-    sameSite: 'Strict',
+    sameSite: 'None',
     maxAge: 60 * 30,
   })
 
@@ -152,7 +152,7 @@ authRouter.post('/logout', [], async (req, res) => {
       path: '/',
       httpOnly: true,
       secure: true,
-      sameSite: 'Strict',
+      sameSite: 'None',
       maxAge: 0,
     })
   }

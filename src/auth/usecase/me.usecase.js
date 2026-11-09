@@ -48,7 +48,7 @@ const meUsecase = async (dependency, command) => {
 
   // 사용자 조회
   const user = await pool
-    .query('select id, email, nickname, profile, status from users where id = $1', [
+    .query('select id, email, nickname, profile, status, role from users where id = $1', [
       payload.sub,
     ])
     .then((result) => result.rows[0])
@@ -76,7 +76,13 @@ const meUsecase = async (dependency, command) => {
   }
 
   return Result.ok(
-    new MeResponseDto(String(user.id), user.email, user.nickname, user.profile),
+    new MeResponseDto(
+      String(user.id),
+      user.email,
+      user.nickname,
+      user.profile,
+      user.role,
+    ),
   )
 }
 
