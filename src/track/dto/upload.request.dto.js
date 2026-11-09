@@ -25,8 +25,8 @@ export default class UploadRequestDto {
    * @param {File | any} image
    */
   constructor(title, artist, audio, image) {
-    this.title = String(title).trim()
-    this.artist = artist
+    this.title = typeof title === 'string' ? title.trim() : title
+    this.artist = typeof artist === 'string' ? artist.trim() : artist
     this.audio = audio
     this.image = image
   }
