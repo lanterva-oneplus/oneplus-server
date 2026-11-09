@@ -18,7 +18,6 @@ import StorageService from '../service/storage.service.js'
  * @property {number} id
  */
 /**
- * DB 삭제(track_infos -> tracks 트랜잭션) -> 파일 삭제. 파일 삭제 실패는 로그만 남기고 성공 처리.
  * @type {Usecase<DeleteDependency, DeleteCommand, DeleteResponseDto, InternalServerErrorException | NotFoundException>}
  */
 const deleteUsecase = async (dependency, command) => {
@@ -54,7 +53,6 @@ const deleteUsecase = async (dependency, command) => {
     return Result.fail(new NotFoundException('트랙을 찾을 수 없습니다.', 'track_not_found'))
   }
 
-  // DB 삭제 성공 후 파일 정리 (remove는 실패해도 throw하지 않음)
   await storageService.remove('tracks', row.track_path)
   if (row.image_path) await storageService.remove('images', row.image_path)
 
