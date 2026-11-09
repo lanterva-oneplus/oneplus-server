@@ -3,6 +3,7 @@ import { parseMultipart } from '../common/modules/multipart.module.js'
 import pool from '../common/modules/postgresql.module.js'
 import { Router } from '../common/server/router.js'
 import UploadRequestDto from './dto/upload.request.dto.js'
+import NoteService from './service/note.service.js'
 import StorageService from './service/storage.service.js'
 import uploadUsecase from './usecase/upload.usecase.js'
 
@@ -30,7 +31,7 @@ trackRouter.post('', [], async (req, res) => {
   }
 
   const result = await uploadUsecase(
-    { pool: pool, storageService: new StorageService() },
+    { pool: pool, storageService: new StorageService(), noteService: new NoteService() },
     uploadRequestDto.toObject(),
   )
 

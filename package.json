@@ -18,7 +18,9 @@
   "author": "",
   "license": "none",
   "dependencies": {
+    "@audio/mir-drums": "^1.1.6",
     "ioredis": "^6.0.0",
+    "node-web-audio-api": "^2.2.0",
     "pg": "^8.23.0"
   },
   "devDependencies": {
