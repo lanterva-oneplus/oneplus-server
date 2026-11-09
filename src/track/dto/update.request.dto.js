@@ -5,13 +5,12 @@ import { IMAGE_TYPES } from './upload.request.dto.js'
  */
 
 /**
- * 수정 가능 필드는 title, image뿐이다 (그 외 필드는 읽지 않음). 둘 다 선택이지만 최소 하나는 필요.
  * @implements {DTO}
  */
 export default class UpdateRequestDto {
   /**
-   * @param {string | any} title 미전송이면 null
-   * @param {File | any} image 미전송이면 null
+   * @param {string | any} title 
+   * @param {File | any} image 
    */
   constructor(title, image) {
     this.title = typeof title === 'string' ? title.trim() : title
