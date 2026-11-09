@@ -5,11 +5,13 @@ import { Router } from '../common/server/router.js'
 import NotFoundException from '../common/http_exceptions/not-found.exception.js'
 import InfoRequestDto from './dto/info.request.dto.js'
 import LoadRequestDto from './dto/load.request.dto.js'
+import UpdateRequestDto from './dto/update.request.dto.js'
 import UploadRequestDto from './dto/upload.request.dto.js'
 import NoteService from './service/note.service.js'
 import StorageService from './service/storage.service.js'
 import infoUsecase from './usecase/info.usecase.js'
 import loadUsecase from './usecase/load.usecase.js'
+import updateUsecase from './usecase/update.usecase.js'
 import uploadUsecase from './usecase/upload.usecase.js'
 
 const trackRouter = new Router()
@@ -84,6 +86,41 @@ trackRouter.get('/:id', [], async (req, res) => {
 
 trackRouter.delete('/:id', [], (req, res) => {})
 
-trackRouter.patch('/:id', [], (req, res) => {})
+// multipart/form-data: title, image 중 최소 하나 (그 외 필드는 무시)
+trackRouter.patch('/:id', [], async (req, res) => {
+  // body는 첫 await 전에 소비해야 하므로 파싱을 먼저 시작
+  const formPromise = parseMultipart(req)
+
+  const loadRequestDto = new LoadRequestDto(req.params.id)
+
+  /** @type {FormData} */
+  let form
+  try {
+    form = await formPromise
+  } catch (err) {
+    console.error(err)
+    return res.sendError(new BadRequestException('요청값이 올바르지 않습니다.'))
+  }
+
+  if (!loadRequestDto.isValid()) {
+    return res.sendError(
+      new NotFoundException('트랙을 찾을 수 없습니다.', 'track_not_found'),
+    )
+  }
+
+  const updateRequestDto = new UpdateRequestDto(form.get('title'), form.get('image'))
+  if (!updateRequestDto.isValid()) {
+    return res.sendError(new BadRequestException('요청값이 올바르지 않습니다.'))
+  }
+
+  const result = await updateUsecase(
+    { pool: pool, storageService: new StorageService() },
+    { ...loadRequestDto.toObject(), ...updateRequestDto.toObject() },
+  )
+
+  if (result.error) return res.sendError(result.error)
+
+  return res.sendSuccess(result.data?.toObject(), '트랙 수정에 성공했습니다.', 200)
+})
 
 export default trackRouter
