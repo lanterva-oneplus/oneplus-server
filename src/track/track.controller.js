@@ -4,10 +4,12 @@ import pool from '../common/modules/postgresql.module.js'
 import { Router } from '../common/server/router.js'
 import NotFoundException from '../common/http_exceptions/not-found.exception.js'
 import InfoRequestDto from './dto/info.request.dto.js'
+import LoadRequestDto from './dto/load.request.dto.js'
 import UploadRequestDto from './dto/upload.request.dto.js'
 import NoteService from './service/note.service.js'
 import StorageService from './service/storage.service.js'
 import infoUsecase from './usecase/info.usecase.js'
+import loadUsecase from './usecase/load.usecase.js'
 import uploadUsecase from './usecase/upload.usecase.js'
 
 const trackRouter = new Router()
@@ -46,7 +48,6 @@ trackRouter.post('', [], async (req, res) => {
 // ?id=<number>: 특정 트랙 / ?cursor=<number>: 이 id 이전부터 20개 (없으면 최신 20개)
 trackRouter.get('/info', [], async (req, res) => {
   const infoRequestDto = new InfoRequestDto(req.query.id, req.query.cursor)
-  // 형식이 잘못된 id는 존재하지 않는 트랙으로 취급
   if (!infoRequestDto.isValid()) {
     return res.sendError(
       new NotFoundException('트랙을 찾을 수 없습니다.', 'track_not_found'),
@@ -63,7 +64,23 @@ trackRouter.get('/info', [], async (req, res) => {
   return res.sendSuccess(result.data?.toObject(), '트랙 정보 조회에 성공했습니다.', 200)
 })
 
-trackRouter.get('/:id', [], (req, res) => {})
+trackRouter.get('/:id', [], async (req, res) => {
+  const loadRequestDto = new LoadRequestDto(req.params.id)
+  if (!loadRequestDto.isValid()) {
+    return res.sendError(
+      new NotFoundException('트랙을 찾을 수 없습니다.', 'track_not_found'),
+    )
+  }
+
+  const result = await loadUsecase(
+    { pool: pool, storageService: new StorageService() },
+    loadRequestDto.toObject(),
+  )
+
+  if (result.error) return res.sendError(result.error)
+
+  return res.sendSuccess(result.data?.toObject(), '트랙 로드에 성공했습니다.', 200)
+})
 
 trackRouter.delete('/:id', [], (req, res) => {})
 
