@@ -17,7 +17,7 @@
 /**
  * @typedef {sReq & {
  * query: Record<string, string>
- * params: Record<string, string | undefined> | {}
+ * params: Record<string, string | undefined>
  * }} req
  *
  * @typedef {sRes & {
