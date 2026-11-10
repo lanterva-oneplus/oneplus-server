@@ -19,7 +19,7 @@ import refreshUsecase from './usecase/refresh.usecase.js'
 const authRouter = new Router()
 
 authRouter.get('', [], async (req, res) => {
-  const deviceIdHeader = req.headers['x-device-id']
+  const deviceIdHeader = req.headers['x-device-id'] ?? req.query['x-device-id']
 
   const entryRequestDto = new EntryRequestDto(deviceIdHeader)
   if (!entryRequestDto.isValid())
