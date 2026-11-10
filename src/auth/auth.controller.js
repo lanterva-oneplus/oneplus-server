@@ -85,7 +85,11 @@ authRouter.get('/callback', [], async (req, res) => {
     maxAge: 60 * 60 * 24 * 14,
   })
 
-  return res.sendSuccess(null, '로그인에 성공했습니다.', 200)
+  const redirectURL =
+    process.env.LOGIN_SUCCESS_REDIRECT_URL ??
+    'http://127.0.0.1:5501/src/main.html'
+
+  return res.redirect(redirectURL, { statusCode: 302, cache: false })
 })
 
 authRouter.post('/refresh', [], async (req, res) => {
